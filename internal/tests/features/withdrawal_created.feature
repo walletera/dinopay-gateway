@@ -7,7 +7,7 @@ Feature: process WithdrawalCreated event
 
   Scenario: withdrawal created event is processed successfully
     Given a withdrawal created event:
-    """
+    """json
     {
       "type": "WithdrawalCreated",
       "data": {
@@ -30,11 +30,9 @@ Feature: process WithdrawalCreated event
       }
     }
     """
-    When the event is published
-    Then dinopay-gateway process the event
-    And  dinopay api is called with the correct parameters:
+    And  a dinopay endpoint to create payments:
     # the json below is a mockserver expectation
-    """
+    """json
     {
       "id": "createPaymentSucceed",
       "httpRequest" : {
@@ -73,3 +71,6 @@ Feature: process WithdrawalCreated event
       }
     }
     """
+    When the event is published
+    Then the dinopay-gateway process the event
+    And  the dinopay api is called with the correct parameters
