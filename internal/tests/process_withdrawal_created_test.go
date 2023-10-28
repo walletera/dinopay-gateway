@@ -5,10 +5,12 @@ import (
     "encoding/json"
     "fmt"
     "github.com/cucumber/godog"
+    "github.com/walletera/dinopay-gateway/internal/app"
     "github.com/walletera/dinopay-gateway/pkg/logs"
     "github.com/walletera/message-processor/pkg/events/payments"
     "github.com/walletera/message-processor/pkg/rabbitmq"
     msClient "github.com/walletera/mockserver-go-client/pkg/client"
+    "go.uber.org/zap"
     "net/http"
     "net/url"
     "testing"
@@ -20,10 +22,24 @@ const (
     logsWatcherKey                                = "logsWatcher"
     dinoPayEndpointCreatePaymentsExpectationIdKey = "dinoPayEndpointCreatePaymentsExpectationId"
     mockserverClientKey                           = "mockserverClient"
+    loggerKey                                     = "logger"
 )
 
 type MockServerExpectation struct {
     ExpectationID string `json:"id"`
+}
+
+var logger, _ = zap.NewDevelopment()
+
+func aRunningDinopayGateway(ctx context.Context) (context.Context, error) {
+    go func() {
+        err := app.NewApp().Run(ctx)
+        if err != nil {
+            logger.Error("failed running app", zap.Error(err))
+        }
+    }()
+
+    return ctx, nil
 }
 
 func aWithdrawalCreatedEvent(ctx context.Context, event *godog.DocString) (context.Context, error) {
@@ -127,9 +143,16 @@ func InitializeScenario(godogCtx *godog.ScenarioContext) {
     godogCtx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
         logsWatcher := logs.NewWatcher()
         logsWatcher.Start()
-        return context.WithValue(ctx, logsWatcherKey, logsWatcher), nil
+        ctx = context.WithValue(ctx, logsWatcherKey, logsWatcher)
+        logger, err := zap.NewDevelopment()
+        if err != nil {
+            return ctx, fmt.Errorf("failed creating zap logger: %w", err)
+        }
+        ctx = context.WithValue(ctx, loggerKey, logger)
+        return ctx, nil
     })
 
+    godogCtx.Given(`^a running dinopay-gateway$`, aRunningDinopayGateway)
     godogCtx.Given(`^a withdrawal created event:$`, aWithdrawalCreatedEvent)
     godogCtx.Given(`^a dinopay endpoint to create payments:$`, aDinoPayEndpointToCreatePayments)
     godogCtx.When(`^the event is published$`, theEventIsPublished)

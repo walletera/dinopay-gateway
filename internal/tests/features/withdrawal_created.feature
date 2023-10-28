@@ -5,6 +5,9 @@ Feature: process WithdrawalCreated event
   - The DinoPay Gateway must listen for WithdrawalCreated events.
   - Whenever a WithdrawalCreated event arrives the dinopay-gateway must create a corresponding Payment on DinoPay API.
 
+  Background: the dinopay-gateway is up and running
+    Given a running dinopay-gateway
+
   Scenario: withdrawal created event is processed successfully
     Given a withdrawal created event:
     """json
