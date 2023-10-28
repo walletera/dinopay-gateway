@@ -22,6 +22,7 @@ type Watcher struct {
 }
 
 func NewWatcher() *Watcher {
+
     return &Watcher{
         lines:       make([]string, 0),
         newLinesChs: make([]chan string, 0),
@@ -30,8 +31,6 @@ func NewWatcher() *Watcher {
 }
 
 func (l *Watcher) Start() error {
-    fmt.Printf("logs watcher started")
-
     l.realStdout = os.Stdout
     l.realStderr = os.Stderr
 
@@ -63,7 +62,6 @@ func (l *Watcher) Start() error {
         if err := scanner.Err(); err != nil {
             select {
             case <-l.stopping:
-                fmt.Println("logs watcher stopped")
                 return
             default:
             }
