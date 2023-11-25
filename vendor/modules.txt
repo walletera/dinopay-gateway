@@ -281,7 +281,7 @@ github.com/walletera/message-processor/pkg/events
 github.com/walletera/message-processor/pkg/events/payments
 github.com/walletera/message-processor/pkg/messages
 github.com/walletera/message-processor/pkg/rabbitmq
-# github.com/walletera/mockserver-go-client v0.0.0-20230807222846-d0fc8cf72398
+# github.com/walletera/mockserver-go-client v0.0.1
 ## explicit; go 1.20
 github.com/walletera/mockserver-go-client/pkg/client
 # github.com/yusufpapurcu/wmi v1.2.3

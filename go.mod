@@ -8,7 +8,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.25.0
 	github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907
 	github.com/walletera/message-processor v0.0.0-00010101000000-000000000000
-	github.com/walletera/mockserver-go-client v0.0.0-20230807222846-d0fc8cf72398
+	github.com/walletera/mockserver-go-client v0.0.1
 	go.uber.org/zap v1.26.0
 )
 

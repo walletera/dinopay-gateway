@@ -99,26 +99,12 @@ func theEventIsPublished(ctx context.Context) (context.Context, error) {
     return ctx, nil
 }
 
-func theDinoPayGatewayProcessTheEvent(ctx context.Context) (context.Context, error) {
+func theDinopayGatewayProcessTheEventAndProduceTheFollowingLog(ctx context.Context, logMsg string) (context.Context, error) {
     logsWatcher := logsWatcherFromCtx(ctx)
-    foundLogEntry := logsWatcher.WaitFor("WithdrawalCreated event processed successfully", 5*time.Second)
+    foundLogEntry := logsWatcher.WaitFor(logMsg, 10*time.Second)
     if !foundLogEntry {
         return ctx, fmt.Errorf("didn't find expected log entry")
     }
-    return ctx, nil
-}
-
-func theDinoPayApiIsCalledWithTheCorrectParameters(ctx context.Context) (context.Context, error) {
-    mockserverClient := mockserverClientFromCtx(ctx)
-    err := mockserverClient.VerifyRequest(ctx, msClient.VerifyRequestBody{
-        ExpectationId: msClient.ExpectationId{
-            Id: expectationIdFromCtx(ctx),
-        },
-    })
-    if err != nil {
-        return ctx, fmt.Errorf("the dinopay api was not called with the expected parameters: %w", err)
-    }
-
     return ctx, nil
 }
 
@@ -156,12 +142,23 @@ func InitializeScenario(godogCtx *godog.ScenarioContext) {
     godogCtx.Given(`^a withdrawal created event:$`, aWithdrawalCreatedEvent)
     godogCtx.Given(`^a dinopay endpoint to create payments:$`, aDinoPayEndpointToCreatePayments)
     godogCtx.When(`^the event is published$`, theEventIsPublished)
-    godogCtx.Then(`^the dinopay-gateway process the event$`, theDinoPayGatewayProcessTheEvent)
-    godogCtx.Then(`^the dinopay api is called with the correct parameters$`, theDinoPayApiIsCalledWithTheCorrectParameters)
+    godogCtx.Then(`^the dinopay-gateway process the event and produce the following log:$`, theDinopayGatewayProcessTheEventAndProduceTheFollowingLog)
 
     godogCtx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
+
+        verifyErr := verifyMockServerExpectations(ctx)
+        if verifyErr != nil {
+            return ctx, fmt.Errorf("the dinopay api was not called with the expected parameters: %w", verifyErr)
+        }
+
         logsWatcher := logsWatcherFromCtx(ctx)
         logsWatcher.Stop()
+
+        mockserverClient := mockserverClientFromCtx(ctx)
+        clearReqErr := mockserverClient.Clear(ctx)
+        if clearReqErr != nil {
+            return nil, fmt.Errorf("failed clearing mockserver: %w", clearReqErr)
+        }
         return ctx, nil
     })
 }
@@ -176,4 +173,17 @@ func mockserverClientFromCtx(ctx context.Context) *msClient.Client {
 
 func expectationIdFromCtx(ctx context.Context) string {
     return ctx.Value(dinoPayEndpointCreatePaymentsExpectationIdKey).(string)
+}
+
+func verifyMockServerExpectations(ctx context.Context) error {
+    mockserverClient := mockserverClientFromCtx(ctx)
+    verificationErr := mockserverClient.VerifyRequest(ctx, msClient.VerifyRequestBody{
+        ExpectationId: msClient.ExpectationId{
+            Id: expectationIdFromCtx(ctx),
+        },
+    })
+    if verificationErr != nil {
+        return verificationErr
+    }
+    return nil
 }

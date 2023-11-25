@@ -75,5 +75,63 @@ Feature: process WithdrawalCreated event
     }
     """
     When the event is published
-    Then the dinopay-gateway process the event
-    And  the dinopay api is called with the correct parameters
+    Then the dinopay-gateway process the event and produce the following log:
+    """
+    WithdrawalCreated event processed successfully
+    """
+
+  Scenario: withdrawal created event processing failed when trying to create payment on Dinopay
+    Given a withdrawal created event:
+    """json
+    {
+      "type": "WithdrawalCreated",
+      "data": {
+         "id": "0ae1733e-7538-4908-b90a-5721670cb093",
+         "user_id": "2432318c-4ff3-4ac0-b734-9b61779e2e46",
+         "psp_id": "dinopay",
+         "external_id": null,
+         "amount": 100,
+         "currency": "USD",
+         "status": "pending",
+         "beneficiary": {
+           "id": "2f98dbe7-72ab-4167-9be5-ecd3608b55e4",
+           "description": "Richard Roe DinoPay account",
+           "account": {
+            "holder": "Richard Roe",
+            "number": 0,
+            "routing_key": "1200079635"
+           }
+         }
+      }
+    }
+    """
+    And  a dinopay endpoint to create payments:
+    # the json below is a mockserver expectation
+    """json
+    {
+      "id": "createPaymentFail",
+      "httpRequest" : {
+        "operationId" : "createPayment",
+        "specUrlOrPayload" : "https://raw.githubusercontent.com/walletera/dinopay/main/openapi/openapi.yaml"
+      },
+      "httpResponse" : {
+        "statusCode" : 500,
+        "headers" : {
+          "content-type" : [ "text/html" ]
+        },
+        "body" : "something bad happened"
+      },
+      "priority" : 0,
+      "timeToLive" : {
+        "unlimited" : true
+      },
+      "times" : {
+        "unlimited" : true
+      }
+    }
+    """
+    When the event is published
+    Then the dinopay-gateway process the event and produce the following log:
+    """
+    failed creating payment on dinopay
+    """
