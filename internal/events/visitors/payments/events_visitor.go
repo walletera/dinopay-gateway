@@ -45,7 +45,9 @@ func (e *EventsVisitor) VisitWithdrawalCreated(withdrawalCreated payments.Withdr
         },
     })
     if err != nil {
-        return fmt.Errorf("failed creating payment on dinopay: %w", err)
+        errMsg := "failed creating payment on dinopay"
+        logger.Error(errMsg, zap.Error(err))
+        return fmt.Errorf("%s: %w", errMsg, err)
     }
 
     logger.Info("WithdrawalCreated event processed successfully", zap.String("withdrawal_id", withdrawalCreated.Id))
