@@ -181,8 +181,8 @@ github.com/vishvananda/netlink v1.1.0/go.mod h1:cTgwzPIzzgDAYoQrMm0EdrjRUBkTqKYp
 github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df/go.mod h1:JP3t17pCcGlemwknint6hfoeCVQrEMVwxRLRjXpq+BU=
 github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907 h1:j+si5mhKatrHb/egzaNDSO7Lca4r8PTYrjA/Ps1YLp8=
 github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907/go.mod h1:F0dBdQGl4gpFZkZFVMG0xdHZ/LWvHGtiMWU/FtMyiYA=
-github.com/walletera/mockserver-go-client v0.0.0-20230807222846-d0fc8cf72398 h1:0oqRliJiYP63ZXkLRZaFcdSW+sYu6ufPDlTu0mbX2M8=
-github.com/walletera/mockserver-go-client v0.0.0-20230807222846-d0fc8cf72398/go.mod h1:2IFxURJRzsHqT+1fxNO1RlUuUTqEj29d5kME8dVF2og=
+github.com/walletera/mockserver-go-client v0.0.1 h1:w5KEuwWxehfvN4Ooai5AgecmtxreKUHZRETAf5/jUSQ=
+github.com/walletera/mockserver-go-client v0.0.1/go.mod h1:2IFxURJRzsHqT+1fxNO1RlUuUTqEj29d5kME8dVF2og=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yusufpapurcu/wmi v1.2.3 h1:E1ctvB7uKFMOJw3fdOW32DwGE9I7t++CRUEMKvFoFiw=
