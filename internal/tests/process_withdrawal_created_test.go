@@ -10,14 +10,17 @@ import (
     "time"
 
     "github.com/cucumber/godog"
+    "github.com/walletera/dinopay-gateway/internal/app"
     "github.com/walletera/logs-watcher"
     "github.com/walletera/message-processor/pkg/events/payments"
     "github.com/walletera/message-processor/pkg/rabbitmq"
     msClient "github.com/walletera/mockserver-go-client/pkg/client"
+    "go.uber.org/zap"
     "golang.org/x/sync/errgroup"
 )
 
 const (
+    appCtxCancelFuncKey                           = "appCtxCancelFuncKey"
     rawWithdrawalCreatedEventKey                  = "rawWithdrawalCreatedEvent"
     dinoPayEndpointCreatePaymentsExpectationIdKey = "dinoPayEndpointCreatePaymentsExpectationId"
     expectationTimeout                            = 5 * time.Second
@@ -27,6 +30,8 @@ const (
 type MockServerExpectation struct {
     ExpectationID string `json:"id"`
 }
+
+var logger, _ = zap.NewDevelopment()
 
 func TestFeatures(t *testing.T) {
 
@@ -53,6 +58,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
         return ctx, nil
     })
 
+    ctx.Given(`^a running dinopay-gateway$`, aRunningDinopayGateway)
     ctx.Given(`^a withdrawal created event:$`, aWithdrawalCreatedEvent)
     ctx.Given(`^a dinopay endpoint to create payments:$`, aDinopayEndpointToCreatePayments)
     ctx.When(`^the event is published$`, theEventIsPublished)
@@ -61,15 +67,45 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 
     ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 
-        logsWatcher := logsWatcherFromCtx(ctx)
-        logsWatcher.Stop()
-
         clearReqErr := mockServerClient().Clear(ctx)
         if clearReqErr != nil {
             return nil, fmt.Errorf("failed clearing mockserver: %w", clearReqErr)
         }
+
+        logsWatcher := logsWatcherFromCtx(ctx)
+
+        appCtxCancelFuncFromCtx(ctx)()
+        foundLogEntry := logsWatcher.WaitFor("dinopay-gateway stopped", 5*time.Second)
+        if !foundLogEntry {
+            return ctx, fmt.Errorf("didn't find expected log entry")
+        }
+
+        err = logsWatcher.Stop()
+        if err != nil {
+            return ctx, fmt.Errorf("failed stopping the logsWatcher: %w", err)
+        }
+
         return ctx, nil
     })
+}
+
+func aRunningDinopayGateway(ctx context.Context) (context.Context, error) {
+    appCtx, appCtxCancelFunc := context.WithCancel(ctx)
+    go func() {
+        err := app.NewApp().Run(appCtx)
+        if err != nil {
+            logger.Error("failed running app", zap.Error(err))
+        }
+    }()
+
+    ctx = context.WithValue(ctx, appCtxCancelFuncKey, appCtxCancelFunc)
+
+    foundLogEntry := logsWatcherFromCtx(ctx).WaitFor("dinopay-gateway started", 5*time.Second)
+    if !foundLogEntry {
+        return ctx, fmt.Errorf("didn't find expected log entry")
+    }
+
+    return ctx, nil
 }
 
 func aWithdrawalCreatedEvent(ctx context.Context, event *godog.DocString) (context.Context, error) {
@@ -142,6 +178,10 @@ func mockServerClient() *msClient.Client {
     }
 
     return msClient.NewClient(mockserverUrl, http.DefaultClient)
+}
+
+func appCtxCancelFuncFromCtx(ctx context.Context) context.CancelFunc {
+    return ctx.Value(appCtxCancelFuncKey).(context.CancelFunc)
 }
 
 func expectationIdFromCtx(ctx context.Context) string {
