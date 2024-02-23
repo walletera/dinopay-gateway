@@ -92,3 +92,72 @@ Feature: process WithdrawalCreated event
     """
     WithdrawalCreated event processed successfully
     """
+
+  Scenario: withdrawal created event processing failed when trying to create payment on Dinopay
+    Given a withdrawal created event:
+    """json
+    {
+      "type": "WithdrawalCreated",
+      "data": {
+         "id": "0ae1733e-7538-4908-b90a-5721670cb093",
+         "user_id": "2432318c-4ff3-4ac0-b734-9b61779e2e46",
+         "psp_id": "dinopay",
+         "external_id": null,
+         "amount": 100,
+         "currency": "USD",
+         "status": "pending",
+         "beneficiary": {
+           "id": "2f98dbe7-72ab-4167-9be5-ecd3608b55e4",
+           "description": "Richard Roe DinoPay account",
+           "account": {
+            "holder": "Richard Roe",
+            "number": 1200079635
+           }
+         }
+      }
+    }
+    """
+    And  a dinopay endpoint to create payments:
+    # the json below is a mockserver expectation
+    """json
+    {
+      "id": "createPaymentFail",
+      "httpRequest" : {
+        "method": "POST",
+        "path" : "/payments",
+        "body": {
+            "type": "JSON",
+            "json": {
+              "customerTransactionId": "0ae1733e-7538-4908-b90a-5721670cb093",
+              "amount": 100,
+              "currency": "USD",
+              "destinationAccount": {
+                "accountHolder": "Richard Roe",
+                "accountNumber": "1200079635"
+              }
+            },
+            "matchType": "ONLY_MATCHING_FIELDS"
+        }
+      },
+      "httpResponse" : {
+        "statusCode" : 500,
+        "headers" : {
+          "content-type" : [ "text/html" ]
+        },
+        "body" : "something bad happened"
+      },
+      "priority" : 0,
+      "timeToLive" : {
+        "unlimited" : true
+      },
+      "times" : {
+        "unlimited" : true
+      }
+    }
+    """
+    When the event is published
+    Then the dinopay-gateway fails creating the corresponding payment on the DinoPay API
+    And  the dinopay-gateway produces the following log:
+    """
+    failed creating payment on dinopay
+    """

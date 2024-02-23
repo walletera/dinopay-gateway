@@ -63,6 +63,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
     ctx.Given(`^a dinopay endpoint to create payments:$`, aDinopayEndpointToCreatePayments)
     ctx.When(`^the event is published$`, theEventIsPublished)
     ctx.Then(`^the dinopay-gateway creates the corresponding payment on the DinoPay API$`, theDinopaygatewayCreatesTheCorrespondingPaymentOnTheDinoPayAPI)
+    ctx.Then(`the dinopay-gateway fails creating the corresponding payment on the DinoPay API$`, theDinoPayGatewayFailsCreatingTheCorrespondingPayment)
     ctx.Then(`^the dinopay-gateway produces the following log:$`, theDinopayGatewayProducesTheFollowingLog)
 
     ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
@@ -157,6 +158,12 @@ func theEventIsPublished(ctx context.Context) (context.Context, error) {
 }
 
 func theDinopaygatewayCreatesTheCorrespondingPaymentOnTheDinoPayAPI(ctx context.Context) (context.Context, error) {
+    id := expectationIdFromCtx(ctx)
+    err := verifyExpectationMetWithin(ctx, id, expectationTimeout)
+    return ctx, err
+}
+
+func theDinoPayGatewayFailsCreatingTheCorrespondingPayment(ctx context.Context) (context.Context, error) {
     id := expectationIdFromCtx(ctx)
     err := verifyExpectationMetWithin(ctx, id, expectationTimeout)
     return ctx, err
