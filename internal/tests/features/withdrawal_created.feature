@@ -86,9 +86,42 @@ Feature: process WithdrawalCreated event
       }
     }
     """
+    And  a payments endpoint to update withdrawals:
+    # the json below is a mockserver expectation
+    """json
+    {
+      "id": "updateWithdrawalSucceed",
+      "httpRequest" : {
+        "method": "PATCH",
+        "path": "/withdrawals/0ae1733e-7538-4908-b90a-5721670cb093",
+        "body": {
+            "type": "JSON",
+            "json": {
+              "externalId": "bb17667e-daac-41f6-ada3-2c22f24caf22",
+              "status": "confirmed"
+              },
+            "matchType": "ONLY_MATCHING_FIELDS"
+        }
+      },
+      "httpResponse" : {
+        "statusCode" : 200,
+        "headers" : {
+          "content-type" : [ "application/json" ]
+        }
+      },
+      "priority" : 0,
+      "timeToLive" : {
+        "unlimited" : true
+      },
+      "times" : {
+        "unlimited" : true
+      }
+    }
+    """
     When the event is published
     Then the dinopay-gateway creates the corresponding payment on the DinoPay API
-    And  the dinopay-gateway produces the following log:
+    And the dinopay-gateway updates the withdrawal on payments service
+    And the dinopay-gateway produces the following log:
     """
     WithdrawalCreated event processed successfully
     """

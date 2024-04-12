@@ -20,11 +20,12 @@ import (
 )
 
 const (
-    appCtxCancelFuncKey                           = "appCtxCancelFuncKey"
-    rawWithdrawalCreatedEventKey                  = "rawWithdrawalCreatedEvent"
-    dinoPayEndpointCreatePaymentsExpectationIdKey = "dinoPayEndpointCreatePaymentsExpectationId"
-    expectationTimeout                            = 5 * time.Second
-    logsWatcherKey                                = "logsWatcher"
+    appCtxCancelFuncKey                              = "appCtxCancelFuncKey"
+    rawWithdrawalCreatedEventKey                     = "rawWithdrawalCreatedEvent"
+    dinoPayEndpointCreatePaymentsExpectationIdKey    = "dinoPayEndpointCreatePaymentsExpectationId"
+    paymentsEndpointUpdateWithdrawalExpectationIdKey = "paymentsEndpointUpdateWithdrawalExpectationId"
+    expectationTimeout                               = 5 * time.Second
+    logsWatcherKey                                   = "logsWatcher"
 )
 
 type MockServerExpectation struct {
@@ -61,8 +62,10 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
     ctx.Given(`^a running dinopay-gateway$`, aRunningDinopayGateway)
     ctx.Given(`^a withdrawal created event:$`, aWithdrawalCreatedEvent)
     ctx.Given(`^a dinopay endpoint to create payments:$`, aDinopayEndpointToCreatePayments)
+    ctx.Given(`^a payments endpoint to update withdrawals:$`, aPaymentsEndpointToUpdateWithdrawals)
     ctx.When(`^the event is published$`, theEventIsPublished)
-    ctx.Then(`^the dinopay-gateway creates the corresponding payment on the DinoPay API$`, theDinopaygatewayCreatesTheCorrespondingPaymentOnTheDinoPayAPI)
+    ctx.Then(`^the dinopay-gateway creates the corresponding payment on the DinoPay API$`, theDinopayGatewayCreatesTheCorrespondingPaymentOnTheDinoPayAPI)
+    ctx.Then(`^the dinopay-gateway updates the withdrawal on payments service$`, theDinopayGatewayUpdatesTheWithdrawalOnPaymentsService)
     ctx.Then(`the dinopay-gateway fails creating the corresponding payment on the DinoPay API$`, theDinoPayGatewayFailsCreatingTheCorrespondingPayment)
     ctx.Then(`^the dinopay-gateway produces the following log:$`, theDinopayGatewayProducesTheFollowingLog)
 
@@ -117,26 +120,11 @@ func aWithdrawalCreatedEvent(ctx context.Context, event *godog.DocString) (conte
 }
 
 func aDinopayEndpointToCreatePayments(ctx context.Context, mockserverExpectation *godog.DocString) (context.Context, error) {
-    if mockserverExpectation == nil || len(mockserverExpectation.Content) == 0 {
-        return nil, fmt.Errorf("the mockserver expectation is empty or was not defined")
-    }
+    return createMockServerExpectation(ctx, mockserverExpectation, dinoPayEndpointCreatePaymentsExpectationIdKey)
+}
 
-    rawMockserverExpectation := []byte(mockserverExpectation.Content)
-
-    var unmarshalledExpectation MockServerExpectation
-    err := json.Unmarshal(rawMockserverExpectation, &unmarshalledExpectation)
-    if err != nil {
-        fmt.Errorf("error unmarshalling expectation: %w", err)
-    }
-
-    ctx = context.WithValue(ctx, dinoPayEndpointCreatePaymentsExpectationIdKey, unmarshalledExpectation.ExpectationID)
-
-    err = mockServerClient().CreateExpectation(ctx, rawMockserverExpectation)
-    if err != nil {
-        fmt.Errorf("error creating mockserver expectations")
-    }
-
-    return ctx, nil
+func aPaymentsEndpointToUpdateWithdrawals(ctx context.Context, mockserverExpectation *godog.DocString) (context.Context, error) {
+    return createMockServerExpectation(ctx, mockserverExpectation, paymentsEndpointUpdateWithdrawalExpectationIdKey)
 }
 
 func theEventIsPublished(ctx context.Context) (context.Context, error) {
@@ -157,14 +145,20 @@ func theEventIsPublished(ctx context.Context) (context.Context, error) {
     return ctx, nil
 }
 
-func theDinopaygatewayCreatesTheCorrespondingPaymentOnTheDinoPayAPI(ctx context.Context) (context.Context, error) {
-    id := expectationIdFromCtx(ctx)
+func theDinopayGatewayCreatesTheCorrespondingPaymentOnTheDinoPayAPI(ctx context.Context) (context.Context, error) {
+    id := expectationIdFromCtx(ctx, dinoPayEndpointCreatePaymentsExpectationIdKey)
+    err := verifyExpectationMetWithin(ctx, id, expectationTimeout)
+    return ctx, err
+}
+
+func theDinopayGatewayUpdatesTheWithdrawalOnPaymentsService(ctx context.Context) (context.Context, error) {
+    id := expectationIdFromCtx(ctx, paymentsEndpointUpdateWithdrawalExpectationIdKey)
     err := verifyExpectationMetWithin(ctx, id, expectationTimeout)
     return ctx, err
 }
 
 func theDinoPayGatewayFailsCreatingTheCorrespondingPayment(ctx context.Context) (context.Context, error) {
-    id := expectationIdFromCtx(ctx)
+    id := expectationIdFromCtx(ctx, dinoPayEndpointCreatePaymentsExpectationIdKey)
     err := verifyExpectationMetWithin(ctx, id, expectationTimeout)
     return ctx, err
 }
@@ -175,6 +169,29 @@ func theDinopayGatewayProducesTheFollowingLog(ctx context.Context, logMsg string
     if !foundLogEntry {
         return ctx, fmt.Errorf("didn't find expected log entry")
     }
+    return ctx, nil
+}
+
+func createMockServerExpectation(ctx context.Context, mockserverExpectation *godog.DocString, ctxKey string) (context.Context, error) {
+    if mockserverExpectation == nil || len(mockserverExpectation.Content) == 0 {
+        return nil, fmt.Errorf("the mockserver expectation is empty or was not defined")
+    }
+
+    rawMockserverExpectation := []byte(mockserverExpectation.Content)
+
+    var unmarshalledExpectation MockServerExpectation
+    err := json.Unmarshal(rawMockserverExpectation, &unmarshalledExpectation)
+    if err != nil {
+        fmt.Errorf("error unmarshalling expectation: %w", err)
+    }
+
+    ctx = context.WithValue(ctx, ctxKey, unmarshalledExpectation.ExpectationID)
+
+    err = mockServerClient().CreateExpectation(ctx, rawMockserverExpectation)
+    if err != nil {
+        fmt.Errorf("error creating mockserver expectations")
+    }
+
     return ctx, nil
 }
 
@@ -191,8 +208,8 @@ func appCtxCancelFuncFromCtx(ctx context.Context) context.CancelFunc {
     return ctx.Value(appCtxCancelFuncKey).(context.CancelFunc)
 }
 
-func expectationIdFromCtx(ctx context.Context) string {
-    return ctx.Value(dinoPayEndpointCreatePaymentsExpectationIdKey).(string)
+func expectationIdFromCtx(ctx context.Context, ctxKey string) string {
+    return ctx.Value(ctxKey).(string)
 }
 
 func logsWatcherFromCtx(ctx context.Context) *logs.Watcher {
