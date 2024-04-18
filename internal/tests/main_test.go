@@ -57,6 +57,9 @@ func startRabbitMQContainer(ctx context.Context) (func() error, error) {
             fmt.Sprintf("%d:%d", rabbitmq.ManagementUIPort, rabbitmq.ManagementUIPort),
         },
         WaitingFor: wait.NewExecStrategy([]string{"rabbitmqadmin", "list", "queues"}).WithStartupTimeout(20 * time.Second),
+        LogConsumerCfg: &testcontainers.LogConsumerConfig{
+            Consumers: []testcontainers.LogConsumer{NewContainerLogConsumer("rabbitmq")},
+        },
     }
     rabbitmqC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
         ContainerRequest: req,
@@ -87,6 +90,9 @@ func startMockserverContainer(ctx context.Context) (func() error, error) {
         },
         ExposedPorts: []string{fmt.Sprintf("%s:%s", mockserverPort, mockserverPort)},
         WaitingFor:   wait.ForHTTP("/mockserver/status").WithMethod(http.MethodPut).WithPort(mockserverPort),
+        LogConsumerCfg: &testcontainers.LogConsumerConfig{
+            Consumers: []testcontainers.LogConsumer{NewContainerLogConsumer("mockserver")},
+        },
     }
     mockserverC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
         ContainerRequest: req,
