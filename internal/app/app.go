@@ -3,7 +3,9 @@ package app
 import (
     "context"
     "fmt"
-    "github.com/walletera/dinopay-gateway/internal/events/visitors/payments"
+
+    "github.com/walletera/dinopay-gateway/internal/adapters/dinopay"
+    "github.com/walletera/dinopay-gateway/internal/domain/events/visitors/payments"
     paymentslib "github.com/walletera/message-processor/pkg/events/payments"
     "go.uber.org/zap"
 )
@@ -32,7 +34,12 @@ func (a *App) Run(ctx context.Context) error {
         return fmt.Errorf("error creating logger: %w", err)
     }
 
-    processor, err := paymentslib.NewRabbitMQProcessor(payments.NewEventsVisitor(), RabbitMQQueueName)
+    dinopayClient, err := dinopay.NewClient(a.dinopayUrl)
+    if err != nil {
+        return fmt.Errorf("error parsing dinopay url %s: %w", a.dinopayUrl, err)
+    }
+
+    processor, err := paymentslib.NewRabbitMQProcessor(payments.NewEventsVisitor(dinopayClient), RabbitMQQueueName)
     if err != nil {
         return fmt.Errorf("error creating payments rabbitmq processor: %w", err)
     }

@@ -20,6 +20,7 @@ import (
 )
 
 const (
+    mockserverUrl                                    = "http://localhost:2090"
     appCtxCancelFuncKey                              = "appCtxCancelFuncKey"
     rawWithdrawalCreatedEventKey                     = "rawWithdrawalCreatedEvent"
     dinoPayEndpointCreatePaymentsExpectationIdKey    = "dinoPayEndpointCreatePaymentsExpectationId"
@@ -96,7 +97,10 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 func aRunningDinopayGateway(ctx context.Context) (context.Context, error) {
     appCtx, appCtxCancelFunc := context.WithCancel(ctx)
     go func() {
-        err := app.NewApp().Run(appCtx)
+        err := app.NewApp(
+            app.WithDinopayUrl(mockserverUrl),
+            app.WithPaymentsUrl(mockserverUrl),
+        ).Run(appCtx)
         if err != nil {
             logger.Error("failed running app", zap.Error(err))
         }

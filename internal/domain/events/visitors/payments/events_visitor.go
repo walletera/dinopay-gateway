@@ -3,10 +3,10 @@ package payments
 import (
     "context"
     "fmt"
-    "net/http"
     "strconv"
 
     "github.com/google/uuid"
+    "github.com/walletera/dinopay-gateway/internal/domain/ports/output/dinopay"
     dinopayApi "github.com/walletera/dinopay/api"
     "github.com/walletera/message-processor/pkg/events/payments"
     paymentsApi "github.com/walletera/payments/api"
@@ -14,10 +14,13 @@ import (
 )
 
 type EventsVisitor struct {
+    dinopayClient dinopay.Client
 }
 
-func NewEventsVisitor() *EventsVisitor {
-    return &EventsVisitor{}
+func NewEventsVisitor(dinopayClient dinopay.Client) *EventsVisitor {
+    return &EventsVisitor{
+        dinopayClient: dinopayClient,
+    }
 }
 
 func (e *EventsVisitor) VisitWithdrawalCreated(withdrawalCreated payments.WithdrawalCreated) error {
@@ -26,12 +29,7 @@ func (e *EventsVisitor) VisitWithdrawalCreated(withdrawalCreated payments.Withdr
         return fmt.Errorf("failed creating logger: %w", err)
     }
 
-    client, err := dinopayApi.NewClient("http://localhost:2090", dinopayApi.WithClient(http.DefaultClient))
-    if err != nil {
-        return fmt.Errorf("failed creating dinopay api client: %w", err)
-    }
-
-    dinopayResp, err := client.CreatePayment(context.Background(), &dinopayApi.Payment{
+    dinopayResp, err := e.dinopayClient.CreatePayment(context.Background(), &dinopayApi.Payment{
         Amount:   withdrawalCreated.Amount,
         Currency: withdrawalCreated.Currency,
         SourceAccount: dinopayApi.Account{
