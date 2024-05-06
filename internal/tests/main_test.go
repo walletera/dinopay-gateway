@@ -10,17 +10,23 @@ import (
 
     "github.com/testcontainers/testcontainers-go"
     "github.com/testcontainers/testcontainers-go/wait"
-    "github.com/walletera/message-processor/pkg/rabbitmq"
+    "github.com/walletera/message-processor/rabbitmq"
 )
 
 const (
     mockserverPort               = "2090"
+    eventStoreDBPort             = "2113"
     containersStartTimeout       = 30 * time.Second
     containersTerminationTimeout = 10 * time.Second
 )
 
 func TestMain(m *testing.M) {
     ctx, _ := context.WithTimeout(context.Background(), containersStartTimeout)
+
+    terminateEventSToreDBContainer, err := startEventStoreDBContainer(ctx)
+    if err != nil {
+        panic("error starting esdb container: " + err.Error())
+    }
 
     terminateRabbitMQContainer, err := startRabbitMQContainer(ctx)
     if err != nil {
@@ -34,6 +40,11 @@ func TestMain(m *testing.M) {
 
     status := m.Run()
 
+    err = terminateEventSToreDBContainer()
+    if err != nil {
+        panic("error terminating esdb container: " + err.Error())
+    }
+
     err = terminateRabbitMQContainer()
     if err != nil {
         panic("error terminating rabbitmq container: " + err.Error())
@@ -45,6 +56,44 @@ func TestMain(m *testing.M) {
     }
 
     os.Exit(status)
+}
+
+func startEventStoreDBContainer(ctx context.Context) (func() error, error) {
+    req := testcontainers.ContainerRequest{
+        Image: "eventstore/eventstore:21.10.7-buster-slim",
+        Name:  "esdb-node",
+        Cmd:   []string{"--insecure", "--run-projections=All"},
+        ExposedPorts: []string{
+            fmt.Sprintf("%s:%s", eventStoreDBPort, eventStoreDBPort),
+        },
+        WaitingFor: wait.
+            ForHTTP("/health/live").
+            WithPort("2113/tcp").
+            WithStartupTimeout(10 * time.Second).
+            WithStatusCodeMatcher(func(status int) bool {
+                return status == http.StatusNoContent
+            }),
+        LogConsumerCfg: &testcontainers.LogConsumerConfig{
+            Consumers: []testcontainers.LogConsumer{NewContainerLogConsumer("esdb")},
+        },
+    }
+    esdbContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+        ContainerRequest: req,
+        Started:          true,
+    })
+    if err != nil {
+        return nil, fmt.Errorf("error creating rabbitmq container: %w", err)
+    }
+
+    return func() error {
+        terminationCtx, terminationCtxCancel := context.WithTimeout(context.Background(), containersTerminationTimeout)
+        defer terminationCtxCancel()
+        terminationErr := esdbContainer.Terminate(terminationCtx)
+        if terminationErr != nil {
+            fmt.Errorf("failed terminating esdb container: %w", err)
+        }
+        return nil
+    }, nil
 }
 
 func startRabbitMQContainer(ctx context.Context) (func() error, error) {

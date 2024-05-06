@@ -6,24 +6,30 @@ import (
     "strconv"
 
     "github.com/google/uuid"
+    "github.com/walletera/dinopay-gateway/internal/domain/events"
+    dinopayEvents "github.com/walletera/dinopay-gateway/internal/domain/events/dinopay"
     "github.com/walletera/dinopay-gateway/internal/domain/ports/output/dinopay"
     dinopayApi "github.com/walletera/dinopay/api"
-    "github.com/walletera/message-processor/pkg/events/payments"
-    paymentsApi "github.com/walletera/payments/api"
+    "github.com/walletera/message-processor/payments"
     "go.uber.org/zap"
 )
 
 type EventsVisitor struct {
     dinopayClient dinopay.Client
+    esDB          events.DB
 }
 
-func NewEventsVisitor(dinopayClient dinopay.Client) *EventsVisitor {
+func NewEventsVisitor(
+    dinopayClient dinopay.Client,
+    esDB events.DB,
+) *EventsVisitor {
     return &EventsVisitor{
         dinopayClient: dinopayClient,
+        esDB:          esDB,
     }
 }
 
-func (e *EventsVisitor) VisitWithdrawalCreated(withdrawalCreated payments.WithdrawalCreated) error {
+func (e *EventsVisitor) VisitWithdrawalCreated(withdrawalCreated payments.WithdrawalCreatedEvent) error {
     logger, err := zap.NewDevelopment()
     if err != nil {
         return fmt.Errorf("failed creating logger: %w", err)
@@ -59,30 +65,21 @@ func (e *EventsVisitor) VisitWithdrawalCreated(withdrawalCreated payments.Withdr
         return handleError(logger, "unexpected dinopay response", err)
     }
 
-    paymentsClient, err := paymentsApi.NewClient("http://localhost:2090")
-    if err != nil {
-        return handleError(logger, "failed creating payments api client", err)
-    }
-
     withdrawalId, err := uuid.Parse(withdrawalCreated.Id)
     if err != nil {
         handleError(logger, "failed parsing WithdrawalCreated uuid", err)
     }
 
-    _, err = paymentsClient.PatchWithdrawal(context.Background(),
-        &paymentsApi.WithdrawalPatchBody{
-            ExternalId: paymentsApi.OptUUID{
-                Value: payment.ID.Value,
-                Set:   true,
-            },
-            Status: paymentsApi.WithdrawalPatchBodyStatusConfirmed,
-        },
-        paymentsApi.PatchWithdrawalParams{
-            WithdrawalId: withdrawalId,
-        })
+    outboundPaymentCreated := dinopayEvents.OutboundPaymentCreated{
+        Id:                   uuid.New(),
+        WithdrawalId:         withdrawalId,
+        DinopayPaymentId:     payment.ID.Value,
+        DinopayPaymentStatus: string(payment.Status.Value),
+    }
 
+    err = e.esDB.AppendEvents(dinopayEvents.BuildStreamName(payment.ID.Value.String()), outboundPaymentCreated)
     if err != nil {
-        handleError(logger, "failed updating withdrawal in payments service", err)
+        return fmt.Errorf("failed adding OutboundPaymentCreated event to the repository: %w", err)
     }
 
     logger.Info("WithdrawalCreated event processed successfully", zap.String("withdrawal_id", withdrawalCreated.Id))

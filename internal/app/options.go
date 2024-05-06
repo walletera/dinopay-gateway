@@ -13,3 +13,7 @@ func WithDinopayUrl(url string) func(app *App) {
 func WithPaymentsUrl(url string) func(app *App) {
     return func(app *App) { app.paymentsUrl = url }
 }
+
+func WithESDBUrl(url string) func(app *App) {
+    return func(app *App) { app.esdbUrl = url }
+}

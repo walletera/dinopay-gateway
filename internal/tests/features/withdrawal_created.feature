@@ -98,7 +98,7 @@ Feature: process WithdrawalCreated event
             "type": "JSON",
             "json": {
               "externalId": "bb17667e-daac-41f6-ada3-2c22f24caf22",
-              "status": "confirmed"
+              "status": "pending"
               },
             "matchType": "ONLY_MATCHING_FIELDS"
         }
@@ -124,6 +124,10 @@ Feature: process WithdrawalCreated event
     And the dinopay-gateway produces the following log:
     """
     WithdrawalCreated event processed successfully
+    """
+    And the dinopay-gateway produces the following log:
+    """
+    OutboundPaymentCreated event processed successfully
     """
 
   Scenario: withdrawal created event processing failed when trying to create payment on Dinopay

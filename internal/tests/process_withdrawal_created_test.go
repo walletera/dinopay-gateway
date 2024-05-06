@@ -3,17 +3,20 @@ package tests
 import (
     "context"
     "encoding/json"
+    "errors"
     "fmt"
     "net/http"
     "net/url"
     "testing"
     "time"
 
+    "github.com/EventStore/EventStore-Client-Go/v4/esdb"
     "github.com/cucumber/godog"
     "github.com/walletera/dinopay-gateway/internal/app"
+    "github.com/walletera/dinopay-gateway/pkg/eventstoredb"
     "github.com/walletera/logs-watcher"
-    "github.com/walletera/message-processor/pkg/events/payments"
-    "github.com/walletera/message-processor/pkg/rabbitmq"
+    "github.com/walletera/message-processor/payments"
+    "github.com/walletera/message-processor/rabbitmq"
     msClient "github.com/walletera/mockserver-go-client/pkg/client"
     "go.uber.org/zap"
     "golang.org/x/sync/errgroup"
@@ -21,6 +24,7 @@ import (
 
 const (
     mockserverUrl                                    = "http://localhost:2090"
+    eventStoreDBUrl                                  = "esdb://localhost:2113?tls=false"
     appCtxCancelFuncKey                              = "appCtxCancelFuncKey"
     rawWithdrawalCreatedEventKey                     = "rawWithdrawalCreatedEvent"
     dinoPayEndpointCreatePaymentsExpectationIdKey    = "dinoPayEndpointCreatePaymentsExpectationId"
@@ -95,11 +99,23 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 }
 
 func aRunningDinopayGateway(ctx context.Context) (context.Context, error) {
+
+    ctx, err := esdbByCategoryProjectionEnabled(ctx)
+    if err != nil {
+        return ctx, fmt.Errorf("failed enabling by-category projection: %w", err)
+    }
+
+    ctx, err = anEventstoreDBPersistentSubscriptionForCategoryOutboundPayment(ctx)
+    if err != nil {
+        return ctx, fmt.Errorf("failed creating persistent subscription on esdb: %w", err)
+    }
+
     appCtx, appCtxCancelFunc := context.WithCancel(ctx)
     go func() {
         err := app.NewApp(
             app.WithDinopayUrl(mockserverUrl),
             app.WithPaymentsUrl(mockserverUrl),
+            app.WithESDBUrl(eventStoreDBUrl),
         ).Run(appCtx)
         if err != nil {
             logger.Error("failed running app", zap.Error(err))
@@ -111,6 +127,55 @@ func aRunningDinopayGateway(ctx context.Context) (context.Context, error) {
     foundLogEntry := logsWatcherFromCtx(ctx).WaitFor("dinopay-gateway started", 5*time.Second)
     if !foundLogEntry {
         return ctx, fmt.Errorf("didn't find expected log entry")
+    }
+
+    return ctx, nil
+}
+
+func esdbByCategoryProjectionEnabled(ctx context.Context) (context.Context, error) {
+    req, err := http.NewRequestWithContext(
+        ctx,
+        http.MethodPost,
+        fmt.Sprintf("http://127.0.0.1:%s/projection/$by_category/command/enable", eventStoreDBPort),
+        nil,
+    )
+    if err != nil {
+        return ctx, fmt.Errorf("failed creating request for enabling $by_category projection: %w", err)
+    }
+    req.Header.Add("Accept", "application/json")
+    req.Header.Add("Content-Length", "0")
+    _, err = http.DefaultClient.Do(req)
+    if err != nil {
+        return ctx, fmt.Errorf("failed enabling $by_category projection: %w", err)
+    }
+    return ctx, nil
+}
+
+func anEventstoreDBPersistentSubscriptionForCategoryOutboundPayment(ctx context.Context) (context.Context, error) {
+    subscriptionSettings := esdb.SubscriptionSettingsDefault()
+    subscriptionSettings.ResolveLinkTos = true
+    subscriptionSettings.MaxRetryCount = 3
+
+    esdbClient, err := eventstoredb.GetESDBClient(eventStoreDBUrl)
+    if err != nil {
+        return ctx, err
+    }
+
+    err = esdbClient.CreatePersistentSubscription(
+        context.Background(),
+        app.ESDB_ByCategoryProjection_OutboundPayment,
+        app.ESDB_SubscriptionGroupName,
+        esdb.PersistentStreamSubscriptionOptions{
+            Settings: &subscriptionSettings,
+        },
+    )
+    // FIXME: delete persistent subscription on the After hook
+    if err != nil {
+        var esdbError *esdb.Error
+        ok := errors.As(err, &esdbError)
+        if !ok || !esdbError.IsErrorCode(esdb.ErrorCodeResourceAlreadyExists) {
+            return ctx, fmt.Errorf("CreatePersistentSubscription failed: %w", err)
+        }
     }
 
     return ctx, nil
@@ -226,7 +291,6 @@ func verifyExpectationMetWithin(ctx context.Context, expectationID string, timeo
     errGroup.Go(func() error {
         var err error
         for {
-
             select {
             case <-timeoutCh:
                 return fmt.Errorf("expectation %s was not met whithin %s: %w", expectationID, timeout.String(), err)
