@@ -3,39 +3,40 @@ package payments
 import (
     "context"
     "fmt"
+    "log/slog"
     "strconv"
 
     "github.com/google/uuid"
     "github.com/walletera/dinopay-gateway/internal/domain/events"
     dinopayEvents "github.com/walletera/dinopay-gateway/internal/domain/events/dinopay"
     "github.com/walletera/dinopay-gateway/internal/domain/ports/output/dinopay"
+    "github.com/walletera/dinopay-gateway/pkg/logattr"
     dinopayApi "github.com/walletera/dinopay/api"
     "github.com/walletera/message-processor/payments"
-    "go.uber.org/zap"
 )
 
 type EventsVisitor struct {
     dinopayClient dinopay.Client
     esDB          events.DB
+    logger        *slog.Logger
 }
 
-func NewEventsVisitor(
-    dinopayClient dinopay.Client,
-    esDB events.DB,
-) *EventsVisitor {
+func NewEventsVisitor(dinopayClient dinopay.Client, esDB events.DB, logger *slog.Logger, ) *EventsVisitor {
     return &EventsVisitor{
         dinopayClient: dinopayClient,
         esDB:          esDB,
+        logger:        logger.With(logattr.Component("payments/EventsVisitor")),
     }
 }
 
-func (e *EventsVisitor) VisitWithdrawalCreated(withdrawalCreated payments.WithdrawalCreatedEvent) error {
-    logger, err := zap.NewDevelopment()
-    if err != nil {
-        return fmt.Errorf("failed creating logger: %w", err)
-    }
+func (ev *EventsVisitor) VisitWithdrawalCreated(withdrawalCreated payments.WithdrawalCreatedEvent) error {
+    logger := ev.logger.With(
+        logattr.EventType("WithdrawalCreated"),
+        logattr.WithdrawalId(withdrawalCreated.Id),
+    )
 
-    dinopayResp, err := e.dinopayClient.CreatePayment(context.Background(), &dinopayApi.Payment{
+    // TODO modify visitor to accept a context
+    dinopayResp, err := ev.dinopayClient.CreatePayment(context.Background(), &dinopayApi.Payment{
         Amount:   withdrawalCreated.Amount,
         Currency: withdrawalCreated.Currency,
         SourceAccount: dinopayApi.Account{
@@ -77,17 +78,17 @@ func (e *EventsVisitor) VisitWithdrawalCreated(withdrawalCreated payments.Withdr
         DinopayPaymentStatus: string(payment.Status.Value),
     }
 
-    err = e.esDB.AppendEvents(dinopayEvents.BuildStreamName(payment.ID.Value.String()), outboundPaymentCreated)
+    err = ev.esDB.AppendEvents(dinopayEvents.BuildStreamName(payment.ID.Value.String()), outboundPaymentCreated)
     if err != nil {
         return fmt.Errorf("failed adding OutboundPaymentCreated event to the repository: %w", err)
     }
 
-    logger.Info("WithdrawalCreated event processed successfully", zap.String("withdrawal_id", withdrawalCreated.Id))
+    ev.logger.Info("WithdrawalCreated event processed successfully", slog.String("withdrawal_id", withdrawalCreated.Id))
 
     return nil
 }
 
-func handleError(logger *zap.Logger, errMsg string, err error) error {
-    logger.Error(errMsg, zap.Error(err))
+func handleError(logger *slog.Logger, errMsg string, err error) error {
+    logger.Error(errMsg, logattr.Error(err.Error()))
     return fmt.Errorf("%s: %w", errMsg, err)
 }

@@ -15,6 +15,7 @@ require (
 	github.com/walletera/mockserver-go-client v0.0.1
 	github.com/walletera/payments v0.0.2
 	go.uber.org/zap v1.27.0
+	go.uber.org/zap/exp v0.2.0
 	golang.org/x/sync v0.7.0
 )
 

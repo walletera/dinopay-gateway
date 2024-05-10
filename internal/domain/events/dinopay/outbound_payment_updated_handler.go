@@ -7,6 +7,15 @@ import (
     paymentsApi "github.com/walletera/payments/api"
 )
 
+type HandlerError struct {
+    withdrawalId string
+    err          error
+}
+
+func (h *HandlerError) Error() string {
+    return fmt.Sprintf("error handling DinopayOutboundPaymentUpdated event for withdrawal %s", h.withdrawalId)
+}
+
 type OutboundPaymentUpdatedHandler struct {
     db             events.DB
     paymentsClient *paymentsApi.Client
@@ -23,16 +32,20 @@ func NewOutboundPaymentUpdatedHandler(db events.DB, client *paymentsApi.Client) 
     }
 }
 
-func (h *OutboundPaymentUpdatedHandler) Handle(outboundPaymentUpdated OutboundPaymentUpdated) error {
+func (h *OutboundPaymentUpdatedHandler) Handle(outboundPaymentUpdated OutboundPaymentUpdated) *HandlerError {
     streamName := BuildStreamName(outboundPaymentUpdated.DinopayPaymentId.String())
     rawEvents, err := h.db.ReadEvents(streamName)
     if err != nil {
-        return fmt.Errorf("failed retrieving events from stream %s: %w", streamName, err)
+        return &HandlerError{
+            err: fmt.Errorf("failed retrieving events from stream %s: %w", streamName, err),
+        }
     }
     for _, rawEvent := range rawEvents {
         event, err := h.deserializer.Deserialize(rawEvent)
         if err != nil {
-            return fmt.Errorf("failed deserializing outboundPaymentUpdated event from raw event %s: %w", rawEvent, err)
+            return &HandlerError{
+                err: fmt.Errorf("failed deserializing outboundPaymentUpdated event from raw event %s: %w", rawEvent, err),
+            }
         }
         err = event.Accept(h)
         if err != nil {
@@ -49,14 +62,21 @@ func (h *OutboundPaymentUpdatedHandler) VisitOutboundPaymentCreated(outboundPaym
 
 func (h *OutboundPaymentUpdatedHandler) VisitOutboundPaymentUpdated(outboundPaymentUpdated OutboundPaymentUpdated) error {
     if h.outboundPaymentCreated == nil {
-        return fmt.Errorf("can't handle OutboundPaymentUpdated for DinoPay payment %s"+
-            " event because the OutboundPaymentCreated event is missing", outboundPaymentUpdated.DinopayPaymentId)
+        return &HandlerError{
+            err: fmt.Errorf("missing OutboundPaymentCreated event"),
+        }
     }
-    return updateWithdrawalStatus(
+    err := updateWithdrawalStatus(
         h.paymentsClient,
         h.outboundPaymentCreated.WithdrawalId,
         outboundPaymentUpdated.DinopayPaymentId,
         outboundPaymentUpdated.DinopayPaymentStatus,
     )
+    if err != nil {
+        return &HandlerError{
+            withdrawalId: h.outboundPaymentCreated.WithdrawalId.String(),
+            err:          err,
+        }
+    }
     return nil
 }
