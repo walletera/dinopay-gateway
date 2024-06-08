@@ -2512,8 +2512,6 @@ github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/objx v0.2.0/go.mod h1:qt09Ya8vawLte6SNmTgCsAVtYtaKzEcn8ATUoHMkEqE=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
 github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=
-github.com/stretchr/objx v0.5.2 h1:xuMeJ0Sdp5ZMRXx/aWO6RZxdr3beISkG5/G/aIRr3pY=
-github.com/stretchr/objx v0.5.2/go.mod h1:FRsXN1f5AsAjCGJKqEizvkpNtU+EGNCLh3NxZ/8L+MA=
 github.com/stretchr/testify v0.0.0-20180303142811-b89eecf5ca5d/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
@@ -2572,8 +2570,8 @@ github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907 h1:j+si5mhKatrHb
 github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907/go.mod h1:F0dBdQGl4gpFZkZFVMG0xdHZ/LWvHGtiMWU/FtMyiYA=
 github.com/walletera/logs-watcher v0.0.2 h1:4lzH059waXgb7PGWdf6aX3t2M1FizYgUsRieerl3dys=
 github.com/walletera/logs-watcher v0.0.2/go.mod h1:IUTqLLTPUx1QJ7Gf2BZhx4u8GTSSTagLmB6IVEcNhXQ=
-github.com/walletera/message-processor v0.0.4 h1:V4xFGNSwvlKoj/sipHBwMhJEdbDrzLEcKVasMxc3imI=
-github.com/walletera/message-processor v0.0.4/go.mod h1:Jzj6iMfw0LfjLQJlccXzF+L8F70BrrsC1uZjawnTSYA=
+github.com/walletera/message-processor v0.0.5 h1:kFMp2D2puJLrzgWgqzvpzV16kHSCaPIiziIfBoDFMD4=
+github.com/walletera/message-processor v0.0.5/go.mod h1:HmauPgxrGzn7NvOn1dXts7dyL2BsVTD9RUAkrQqApMk=
 github.com/walletera/mockserver-go-client v0.0.1 h1:w5KEuwWxehfvN4Ooai5AgecmtxreKUHZRETAf5/jUSQ=
 github.com/walletera/mockserver-go-client v0.0.1/go.mod h1:2IFxURJRzsHqT+1fxNO1RlUuUTqEj29d5kME8dVF2og=
 github.com/walletera/payments v0.0.2 h1:agJH287dIYkDCDksrgthtpXOxzdkaikWzMXJvOzJbuk=
