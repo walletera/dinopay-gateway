@@ -1,4 +1,4 @@
-package dinopay
+package gateway
 
 import (
     "context"

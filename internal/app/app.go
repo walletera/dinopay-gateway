@@ -7,8 +7,8 @@ import (
 
     "github.com/walletera/dinopay-gateway/internal/adapters/dinopay"
     esdbAdapter "github.com/walletera/dinopay-gateway/internal/adapters/eventstoredb"
-    dinopayEvents "github.com/walletera/dinopay-gateway/internal/domain/events/dinopay"
-    "github.com/walletera/dinopay-gateway/internal/domain/events/payments"
+    dinopay2 "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway"
+    "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/payments"
     esdbPkg "github.com/walletera/dinopay-gateway/pkg/eventstoredb"
     "github.com/walletera/dinopay-gateway/pkg/logattr"
     "github.com/walletera/message-processor/messages"
@@ -113,7 +113,7 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
     return paymentsMessageProcessor, nil
 }
 
-func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[dinopayEvents.EventsVisitor], error) {
+func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[dinopay2.EventsVisitor], error) {
 
     paymentsClient, err := paymentsApi.NewClient(app.paymentsUrl)
     if err != nil {
@@ -136,10 +136,10 @@ func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
 
     eventsDB := esdbAdapter.NewDB(esdbClient)
 
-    eventsVisitor := dinopayEvents.NewEventsVisitorImpl(eventsDB, paymentsClient, logger)
-    return messages.NewProcessor[dinopayEvents.EventsVisitor](
+    eventsVisitor := dinopay2.NewEventsVisitorImpl(eventsDB, paymentsClient, logger)
+    return messages.NewProcessor[dinopay2.EventsVisitor](
         esdbMessagesConsumer,
-        dinopayEvents.NewEventsDeserializer(),
+        dinopay2.NewEventsDeserializer(),
         eventsVisitor,
     ), nil
 }

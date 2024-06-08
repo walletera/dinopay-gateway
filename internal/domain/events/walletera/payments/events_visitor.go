@@ -8,7 +8,7 @@ import (
 
     "github.com/google/uuid"
     "github.com/walletera/dinopay-gateway/internal/domain/events"
-    dinopayEvents "github.com/walletera/dinopay-gateway/internal/domain/events/dinopay"
+    dinopay2 "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway"
     "github.com/walletera/dinopay-gateway/internal/domain/ports/output/dinopay"
     "github.com/walletera/dinopay-gateway/pkg/logattr"
     dinopayApi "github.com/walletera/dinopay/api"
@@ -71,14 +71,14 @@ func (ev *EventsVisitor) VisitWithdrawalCreated(withdrawalCreated payments.Withd
         handleError(logger, "failed parsing WithdrawalCreated uuid", err)
     }
 
-    outboundPaymentCreated := dinopayEvents.OutboundPaymentCreated{
+    outboundPaymentCreated := dinopay2.OutboundPaymentCreated{
         Id:                   uuid.New(),
         WithdrawalId:         withdrawalId,
         DinopayPaymentId:     payment.ID.Value,
         DinopayPaymentStatus: string(payment.Status.Value),
     }
 
-    err = ev.esDB.AppendEvents(dinopayEvents.BuildStreamName(payment.ID.Value.String()), outboundPaymentCreated)
+    err = ev.esDB.AppendEvents(dinopay2.BuildStreamName(payment.ID.Value.String()), outboundPaymentCreated)
     if err != nil {
         return fmt.Errorf("failed adding OutboundPaymentCreated event to the repository: %w", err)
     }
