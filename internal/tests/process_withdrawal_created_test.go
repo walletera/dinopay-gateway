@@ -58,6 +58,8 @@ func TestFeatures(t *testing.T) {
 func InitializeScenario(ctx *godog.ScenarioContext) {
 
     ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
+        fmt.Println("==== " + time.Now().String() + " Starting scenario " + sc.Name + " ====")
+
         logsWatcher := logs.NewWatcher()
         logsWatcher.Start()
         ctx = context.WithValue(ctx, logsWatcherKey, logsWatcher)
@@ -93,6 +95,8 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
         if err != nil {
             return ctx, fmt.Errorf("failed stopping the logsWatcher: %w", err)
         }
+
+        fmt.Println("==== " + time.Now().String() + " Scenario " + sc.Name + " finished ====")
 
         return ctx, nil
     })

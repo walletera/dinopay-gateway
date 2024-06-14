@@ -9,12 +9,12 @@ import (
     paymentsApi "github.com/walletera/payments/api"
 )
 
-func updateWithdrawalStatus(client *paymentsApi.Client, withdrawalId uuid.UUID, dinopayPaymentId uuid.UUID, dinopayPaymentStatus string) error {
+func updateWithdrawalStatus(ctx context.Context, client *paymentsApi.Client, withdrawalId uuid.UUID, dinopayPaymentId uuid.UUID, dinopayPaymentStatus string) error {
     status, err := dinopayStatus2PaymentsStatus(dinopayPaymentStatus)
     if err != nil {
         return err
     }
-    _, err = client.PatchWithdrawal(context.Background(),
+    _, err = client.PatchWithdrawal(ctx,
         &paymentsApi.WithdrawalPatchBody{
             ExternalId: paymentsApi.OptUUID{
                 Value: dinopayPaymentId,

@@ -1,6 +1,8 @@
 package gateway
 
 import (
+    "context"
+
     paymentsApi "github.com/walletera/payments/api"
 )
 
@@ -14,8 +16,9 @@ func NewOutboundPaymentCreatedHandler(client *paymentsApi.Client) *OutboundPayme
     }
 }
 
-func (h *OutboundPaymentCreatedHandler) Handle(outboundPaymentCreated OutboundPaymentCreated) error {
+func (h *OutboundPaymentCreatedHandler) Handle(ctx context.Context, outboundPaymentCreated OutboundPaymentCreated) error {
     return updateWithdrawalStatus(
+        ctx,
         h.client,
         outboundPaymentCreated.WithdrawalId,
         outboundPaymentCreated.DinopayPaymentId,

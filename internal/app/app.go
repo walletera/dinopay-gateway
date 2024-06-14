@@ -6,14 +6,14 @@ import (
     "log/slog"
 
     "github.com/walletera/dinopay-gateway/internal/adapters/dinopay"
-    esdbAdapter "github.com/walletera/dinopay-gateway/internal/adapters/eventstoredb"
-    dinopay2 "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway"
+    esdbadapter "github.com/walletera/dinopay-gateway/internal/adapters/eventstoredb"
+    gatewayevents "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/payments"
-    esdbPkg "github.com/walletera/dinopay-gateway/pkg/eventstoredb"
+    esdbpkg "github.com/walletera/dinopay-gateway/pkg/eventstoredb"
     "github.com/walletera/dinopay-gateway/pkg/logattr"
     "github.com/walletera/message-processor/messages"
-    paymentslib "github.com/walletera/message-processor/payments"
-    paymentsApi "github.com/walletera/payments/api"
+    paymentsevents "github.com/walletera/message-processor/payments"
+    paymentsapi "github.com/walletera/payments/api"
     "go.uber.org/zap"
     "go.uber.org/zap/exp/zapslog"
 )
@@ -59,12 +59,12 @@ func (app *App) Run(ctx context.Context) error {
         return fmt.Errorf("failed starting payments rabbitmq processor: %w", err)
     }
 
-    dinopayMessageProcessor, err := createDinopayMessageProcessor(app, appLogger)
+    gatewayMessageProcessor, err := createGatewayMessageProcessor(app, appLogger)
     if err != nil {
         return fmt.Errorf("failed creating dinopay message processor: %w", err)
     }
 
-    err = dinopayMessageProcessor.Start()
+    err = gatewayMessageProcessor.Start()
     if err != nil {
         return fmt.Errorf("failed starting dinopay message processor: %w", err)
     }
@@ -92,20 +92,20 @@ func newZapLogger() (*zap.Logger, error) {
     return zapConfig.Build()
 }
 
-func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[paymentslib.EventsVisitor], error) {
+func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[paymentsevents.EventsVisitor], error) {
     dinopayClient, err := dinopay.NewClient(app.dinopayUrl)
     if err != nil {
         return nil, fmt.Errorf("failed parsing dinopay url %s: %w", app.dinopayUrl, err)
     }
 
-    esdbClient, err := esdbPkg.GetESDBClient(app.esdbUrl)
+    esdbClient, err := esdbpkg.GetESDBClient(app.esdbUrl)
     if err != nil {
         return nil, fmt.Errorf("failed getting esdb client: %w", err)
     }
 
-    eventsDB := esdbAdapter.NewDB(esdbClient)
+    eventsDB := esdbadapter.NewDB(esdbClient)
     visitor := payments.NewEventsVisitor(dinopayClient, eventsDB, logger)
-    paymentsMessageProcessor, err := paymentslib.NewRabbitMQProcessor(visitor, RabbitMQQueueName)
+    paymentsMessageProcessor, err := paymentsevents.NewRabbitMQProcessor(visitor, RabbitMQQueueName)
     if err != nil {
         return nil, fmt.Errorf("failed creating payments rabbitmq processor: %w", err)
     }
@@ -113,14 +113,14 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
     return paymentsMessageProcessor, nil
 }
 
-func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[dinopay2.EventsVisitor], error) {
+func createGatewayMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[gatewayevents.EventsVisitor], error) {
 
-    paymentsClient, err := paymentsApi.NewClient(app.paymentsUrl)
+    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl)
     if err != nil {
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
     }
 
-    esdbMessagesConsumer, err := esdbPkg.NewMessagesConsumer(
+    esdbMessagesConsumer, err := esdbpkg.NewMessagesConsumer(
         app.esdbUrl,
         ESDB_ByCategoryProjection_OutboundPayment,
         ESDB_SubscriptionGroupName,
@@ -129,17 +129,17 @@ func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
         return nil, fmt.Errorf("failed creating esdb messages consumer: %w", err)
     }
 
-    esdbClient, err := esdbPkg.GetESDBClient(app.esdbUrl)
+    esdbClient, err := esdbpkg.GetESDBClient(app.esdbUrl)
     if err != nil {
         return nil, fmt.Errorf("failed creating esdb client: %w", err)
     }
 
-    eventsDB := esdbAdapter.NewDB(esdbClient)
+    eventsDB := esdbadapter.NewDB(esdbClient)
 
-    eventsVisitor := dinopay2.NewEventsVisitorImpl(eventsDB, paymentsClient, logger)
-    return messages.NewProcessor[dinopay2.EventsVisitor](
+    eventsVisitor := gatewayevents.NewEventsVisitorImpl(eventsDB, paymentsClient, logger)
+    return messages.NewProcessor[gatewayevents.EventsVisitor](
         esdbMessagesConsumer,
-        dinopay2.NewEventsDeserializer(),
+        gatewayevents.NewEventsDeserializer(),
         eventsVisitor,
     ), nil
 }

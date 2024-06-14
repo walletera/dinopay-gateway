@@ -59,11 +59,7 @@ func (mc *MessagesConsumer) Consume() (<-chan messages.Message, error) {
                 fmt.Printf("original event is nil in persistent subcription event")
                 return
             }
-            // TODO The Ack/Nack must be done in the MesssageProcessor
-            persistentSubscription.Ack(event)
-            messagesCh <- messages.Message{
-                Payload: originalEvent.Data,
-            }
+            messagesCh <- messages.NewMessage(originalEvent.Data, Acknowledger{})
         }
     }()
     return messagesCh, nil
