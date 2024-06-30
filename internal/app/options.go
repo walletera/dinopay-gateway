@@ -1,5 +1,7 @@
 package app
 
+import "log/slog"
+
 type Option func(app *App)
 
 func WithRabbitMQUrl(url string) func(app *App) {
@@ -16,4 +18,8 @@ func WithPaymentsUrl(url string) func(app *App) {
 
 func WithESDBUrl(url string) func(app *App) {
     return func(app *App) { app.esdbUrl = url }
+}
+
+func WithLogHandler(handler slog.Handler) func(app *App) {
+    return func(app *App) { app.logHandler = handler }
 }

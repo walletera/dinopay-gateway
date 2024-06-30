@@ -5,6 +5,7 @@ import (
     "encoding/json"
     "errors"
     "fmt"
+    "log/slog"
     "net/http"
     "net/url"
     "testing"
@@ -14,11 +15,13 @@ import (
     "github.com/cucumber/godog"
     "github.com/walletera/dinopay-gateway/internal/app"
     "github.com/walletera/dinopay-gateway/pkg/eventstoredb"
-    "github.com/walletera/logs-watcher"
+    slogwatcher "github.com/walletera/logs-watcher/slog"
     "github.com/walletera/message-processor/payments"
     "github.com/walletera/message-processor/rabbitmq"
     msClient "github.com/walletera/mockserver-go-client/pkg/client"
     "go.uber.org/zap"
+    "go.uber.org/zap/exp/zapslog"
+    "go.uber.org/zap/zapcore"
     "golang.org/x/sync/errgroup"
 )
 
@@ -29,15 +32,14 @@ const (
     rawWithdrawalCreatedEventKey                     = "rawWithdrawalCreatedEvent"
     dinoPayEndpointCreatePaymentsExpectationIdKey    = "dinoPayEndpointCreatePaymentsExpectationId"
     paymentsEndpointUpdateWithdrawalExpectationIdKey = "paymentsEndpointUpdateWithdrawalExpectationId"
-    expectationTimeout                               = 5 * time.Second
     logsWatcherKey                                   = "logsWatcher"
+    expectationTimeout                               = 5 * time.Second
+    logsWatcherWaitForTimeout                        = 5 * time.Second
 )
 
 type MockServerExpectation struct {
     ExpectationID string `json:"id"`
 }
-
-var logger, _ = zap.NewDevelopment()
 
 func TestFeatures(t *testing.T) {
 
@@ -58,10 +60,11 @@ func TestFeatures(t *testing.T) {
 func InitializeScenario(ctx *godog.ScenarioContext) {
 
     ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-        fmt.Println("==== " + time.Now().String() + " Starting scenario " + sc.Name + " ====")
-
-        logsWatcher := logs.NewWatcher()
-        logsWatcher.Start()
+        handler, err := newZapHandler()
+        if err != nil {
+            return ctx, err
+        }
+        logsWatcher := slogwatcher.NewWatcher(handler)
         ctx = context.WithValue(ctx, logsWatcherKey, logsWatcher)
         return ctx, nil
     })
@@ -86,17 +89,15 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
         logsWatcher := logsWatcherFromCtx(ctx)
 
         appCtxCancelFuncFromCtx(ctx)()
-        foundLogEntry := logsWatcher.WaitFor("dinopay-gateway stopped", 5*time.Second)
+        foundLogEntry := logsWatcher.WaitFor("dinopay-gateway stopped", logsWatcherWaitForTimeout)
         if !foundLogEntry {
-            return ctx, fmt.Errorf("didn't find expected log entry")
+            return ctx, fmt.Errorf("app termination failed (didn't find expected log entry)")
         }
 
         err = logsWatcher.Stop()
         if err != nil {
             return ctx, fmt.Errorf("failed stopping the logsWatcher: %w", err)
         }
-
-        fmt.Println("==== " + time.Now().String() + " Scenario " + sc.Name + " finished ====")
 
         return ctx, nil
     })
@@ -114,23 +115,30 @@ func aRunningDinopayGateway(ctx context.Context) (context.Context, error) {
         return ctx, fmt.Errorf("failed creating persistent subscription on esdb: %w", err)
     }
 
+    logHandler := logsWatcherFromCtx(ctx).DecoratedHandler()
+
     appCtx, appCtxCancelFunc := context.WithCancel(ctx)
     go func() {
-        err := app.NewApp(
+        app, err := app.NewApp(
             app.WithDinopayUrl(mockserverUrl),
             app.WithPaymentsUrl(mockserverUrl),
             app.WithESDBUrl(eventStoreDBUrl),
-        ).Run(appCtx)
+            app.WithLogHandler(logHandler),
+        )
         if err != nil {
-            logger.Error("failed running app", zap.Error(err))
+            panic("failed initializing app: " + err.Error())
+        }
+        err = app.Run(appCtx)
+        if err != nil {
+            panic("failed running app" + err.Error())
         }
     }()
 
     ctx = context.WithValue(ctx, appCtxCancelFuncKey, appCtxCancelFunc)
 
-    foundLogEntry := logsWatcherFromCtx(ctx).WaitFor("dinopay-gateway started", 5*time.Second)
+    foundLogEntry := logsWatcherFromCtx(ctx).WaitFor("dinopay-gateway started", logsWatcherWaitForTimeout)
     if !foundLogEntry {
-        return ctx, fmt.Errorf("didn't find expected log entry")
+        return ctx, fmt.Errorf("app startup failed (didn't find expected log entry)")
     }
 
     return ctx, nil
@@ -238,7 +246,7 @@ func theDinoPayGatewayFailsCreatingTheCorrespondingPayment(ctx context.Context) 
 
 func theDinopayGatewayProducesTheFollowingLog(ctx context.Context, logMsg string) (context.Context, error) {
     logsWatcher := logsWatcherFromCtx(ctx)
-    foundLogEntry := logsWatcher.WaitFor(logMsg, 10*time.Second)
+    foundLogEntry := logsWatcher.WaitFor(logMsg, logsWatcherWaitForTimeout)
     if !foundLogEntry {
         return ctx, fmt.Errorf("didn't find expected log entry")
     }
@@ -285,8 +293,8 @@ func expectationIdFromCtx(ctx context.Context, ctxKey string) string {
     return ctx.Value(ctxKey).(string)
 }
 
-func logsWatcherFromCtx(ctx context.Context) *logs.Watcher {
-    return ctx.Value(logsWatcherKey).(*logs.Watcher)
+func logsWatcherFromCtx(ctx context.Context) *slogwatcher.Watcher {
+    return ctx.Value(logsWatcherKey).(*slogwatcher.Watcher)
 }
 
 func verifyExpectationMetWithin(ctx context.Context, expectationID string, timeout time.Duration) error {
@@ -320,4 +328,26 @@ func verifyExpectationMet(ctx context.Context, expectationID string) error {
         return verificationErr
     }
     return nil
+}
+
+func newZapHandler() (slog.Handler, error) {
+    encoderConfig := zap.NewProductionEncoderConfig()
+    encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
+    zapConfig := zap.Config{
+        Level:       zap.NewAtomicLevelAt(zap.DebugLevel),
+        Development: false,
+        Sampling: &zap.SamplingConfig{
+            Initial:    100,
+            Thereafter: 100,
+        },
+        Encoding:         "json",
+        EncoderConfig:    encoderConfig,
+        OutputPaths:      []string{"stderr"},
+        ErrorOutputPaths: []string{"stderr"},
+    }
+    zapLogger, err := zapConfig.Build()
+    if err != nil {
+        return nil, err
+    }
+    return zapslog.NewHandler(zapLogger.Core(), nil), nil
 }

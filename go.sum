@@ -2568,8 +2568,8 @@ github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae/go.mod h1:DD4vA1
 github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f/go.mod h1:DD4vA1DwXk04H54A1oHXtwZmA0grkVMdPxx/VGLCah0=
 github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907 h1:j+si5mhKatrHb/egzaNDSO7Lca4r8PTYrjA/Ps1YLp8=
 github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907/go.mod h1:F0dBdQGl4gpFZkZFVMG0xdHZ/LWvHGtiMWU/FtMyiYA=
-github.com/walletera/logs-watcher v0.0.2 h1:4lzH059waXgb7PGWdf6aX3t2M1FizYgUsRieerl3dys=
-github.com/walletera/logs-watcher v0.0.2/go.mod h1:IUTqLLTPUx1QJ7Gf2BZhx4u8GTSSTagLmB6IVEcNhXQ=
+github.com/walletera/logs-watcher v0.0.3 h1:F0/118dcMVAxcAJazpwiqYIUC5UeigFYyxc/h23WzaI=
+github.com/walletera/logs-watcher v0.0.3/go.mod h1:727nZgaxkTO3qau3bVgrcQR6dKqB8svDRkHsnKTGPho=
 github.com/walletera/message-processor v0.0.5 h1:kFMp2D2puJLrzgWgqzvpzV16kHSCaPIiziIfBoDFMD4=
 github.com/walletera/message-processor v0.0.5/go.mod h1:HmauPgxrGzn7NvOn1dXts7dyL2BsVTD9RUAkrQqApMk=
 github.com/walletera/mockserver-go-client v0.0.1 h1:w5KEuwWxehfvN4Ooai5AgecmtxreKUHZRETAf5/jUSQ=

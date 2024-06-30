@@ -4,6 +4,7 @@ import (
     "context"
     "fmt"
     "log/slog"
+    "time"
 
     "github.com/walletera/dinopay-gateway/internal/adapters/dinopay"
     esdbadapter "github.com/walletera/dinopay-gateway/internal/adapters/eventstoredb"
@@ -16,6 +17,7 @@ import (
     paymentsapi "github.com/walletera/payments/api"
     "go.uber.org/zap"
     "go.uber.org/zap/exp/zapslog"
+    "go.uber.org/zap/zapcore"
 )
 
 const (
@@ -29,24 +31,24 @@ type App struct {
     dinopayUrl  string
     paymentsUrl string
     esdbUrl     string
+    logHandler  slog.Handler
 }
 
-func NewApp(opts ...Option) *App {
+func NewApp(opts ...Option) (*App, error) {
     app := &App{}
+    err := setDefaultOpts(app)
+    if err != nil {
+        return nil, fmt.Errorf("failed setting default options: %w", err)
+    }
     for _, opt := range opts {
         opt(app)
     }
-    return app
+    return app, nil
 }
 
 func (app *App) Run(ctx context.Context) error {
-    zapLogger, err := newZapLogger()
-    if err != nil {
-        return err
-    }
-
     appLogger := slog.
-        New(zapslog.NewHandler(zapLogger.Core(), nil)).
+        New(app.logHandler).
         With(logattr.ServiceName("dinopay-gateway"))
 
     paymentsMessageProcessor, err := createPaymentsMessageProcessor(app, appLogger)
@@ -76,7 +78,18 @@ func (app *App) Run(ctx context.Context) error {
     return nil
 }
 
+func setDefaultOpts(app *App) error {
+    zapLogger, err := newZapLogger()
+    if err != nil {
+        return err
+    }
+    app.logHandler = zapslog.NewHandler(zapLogger.Core(), nil)
+    return nil
+}
+
 func newZapLogger() (*zap.Logger, error) {
+    encoderConfig := zap.NewProductionEncoderConfig()
+    encoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
     zapConfig := zap.Config{
         Level:       zap.NewAtomicLevelAt(zap.DebugLevel),
         Development: false,
@@ -85,7 +98,7 @@ func newZapLogger() (*zap.Logger, error) {
             Thereafter: 100,
         },
         Encoding:         "json",
-        EncoderConfig:    zap.NewProductionEncoderConfig(),
+        EncoderConfig:    encoderConfig,
         OutputPaths:      []string{"stderr"},
         ErrorOutputPaths: []string{"stderr"},
     }
@@ -105,7 +118,10 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
 
     eventsDB := esdbadapter.NewDB(esdbClient)
     visitor := payments.NewEventsVisitor(dinopayClient, eventsDB, logger)
-    paymentsMessageProcessor, err := paymentsevents.NewRabbitMQProcessor(visitor, RabbitMQQueueName)
+    // TODO make queue name configurable. It must not be dynamic to allow load balancing
+    // between different instances of the dinopay-gateway
+    queueName := fmt.Sprintf("RabbitMQQueueName-%d", time.Now().UnixNano())
+    paymentsMessageProcessor, err := paymentsevents.NewRabbitMQProcessor(visitor, queueName)
     if err != nil {
         return nil, fmt.Errorf("failed creating payments rabbitmq processor: %w", err)
     }
