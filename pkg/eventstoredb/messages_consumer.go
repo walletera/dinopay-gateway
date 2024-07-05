@@ -47,6 +47,7 @@ func (mc *MessagesConsumer) Consume() (<-chan messages.Message, error) {
     }
     messagesCh := make(chan messages.Message)
     go func() {
+        defer close(messagesCh)
         for {
             persistentSubscriptionEvent := persistentSubscription.Recv()
             if persistentSubscriptionEvent.SubscriptionDropped != nil {
@@ -66,6 +67,9 @@ func (mc *MessagesConsumer) Consume() (<-chan messages.Message, error) {
 }
 
 func (mc *MessagesConsumer) Close() error {
-    //TODO implement me
-    panic("implement me")
+    err := mc.esdbClient.Close()
+    if err != nil {
+        return fmt.Errorf("failed closing eventstoredb message consumer: %w", err)
+    }
+    return nil
 }

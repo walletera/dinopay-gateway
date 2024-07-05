@@ -38,12 +38,12 @@ func (h *OutboundPaymentUpdatedHandler) Handle(ctx context.Context, outboundPaym
     streamName := BuildStreamName(outboundPaymentUpdated.DinopayPaymentId.String())
     rawEvents, err := h.db.ReadEvents(streamName)
     if err != nil {
-        return errors.NewInternalError(fmt.Sprintf("failed retrieving events from stream %s: %w", streamName, err))
+        return errors.NewInternalError(fmt.Sprintf("failed retrieving events from stream %s: %s", streamName, err.Error()))
     }
     for _, rawEvent := range rawEvents {
         event, err := h.deserializer.Deserialize(rawEvent)
         if err != nil {
-            return errors.NewInternalError(fmt.Sprintf("failed deserializing outboundPaymentUpdated event from raw event %s: %w", rawEvent, err))
+            return errors.NewInternalError(fmt.Sprintf("failed deserializing outboundPaymentUpdated event from raw event %s: %s", rawEvent, err.Error()))
         }
         err = event.Accept(ctx, h)
         if err != nil {

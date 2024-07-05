@@ -11,7 +11,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.28.0
 	github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907
 	github.com/walletera/logs-watcher v0.0.3
-	github.com/walletera/message-processor v0.0.5
+	github.com/walletera/message-processor v0.0.6
 	github.com/walletera/mockserver-go-client v0.0.1
 	github.com/walletera/payments v0.0.2
 	go.uber.org/zap v1.27.0

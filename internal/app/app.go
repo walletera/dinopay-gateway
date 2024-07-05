@@ -56,7 +56,7 @@ func (app *App) Run(ctx context.Context) error {
         return fmt.Errorf("failed creating payments message processor: %w", err)
     }
 
-    err = paymentsMessageProcessor.Start()
+    err = paymentsMessageProcessor.Start(ctx)
     if err != nil {
         return fmt.Errorf("failed starting payments rabbitmq processor: %w", err)
     }
@@ -66,7 +66,7 @@ func (app *App) Run(ctx context.Context) error {
         return fmt.Errorf("failed creating dinopay message processor: %w", err)
     }
 
-    err = gatewayMessageProcessor.Start()
+    err = gatewayMessageProcessor.Start(ctx)
     if err != nil {
         return fmt.Errorf("failed starting dinopay message processor: %w", err)
     }
@@ -118,9 +118,7 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
 
     eventsDB := esdbadapter.NewDB(esdbClient)
     visitor := payments.NewEventsVisitor(dinopayClient, eventsDB, logger)
-    // TODO make queue name configurable. It must not be dynamic to allow load balancing
-    // between different instances of the dinopay-gateway
-    queueName := fmt.Sprintf("RabbitMQQueueName-%d", time.Now().UnixNano())
+    queueName := fmt.Sprintf(RabbitMQQueueName)
     paymentsMessageProcessor, err := paymentsevents.NewRabbitMQProcessor(visitor, queueName)
     if err != nil {
         return nil, fmt.Errorf("failed creating payments rabbitmq processor: %w", err)

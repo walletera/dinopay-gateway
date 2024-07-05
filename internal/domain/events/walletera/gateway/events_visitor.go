@@ -56,14 +56,14 @@ func (ev *EventsVisitorImpl) VisitOutboundPaymentUpdated(ctx context.Context, ou
 }
 
 func logOutboundPaymentUpdatedHandlerError(logger *slog.Logger, outboundPaymentUpdated OutboundPaymentUpdated, err error) {
-    loggerAttrs := []slog.Attr{
+    logger = logger.With(
         logattr.EventType(outboundPaymentUpdated.Type()),
         logattr.DinopayPaymentId(outboundPaymentUpdated.DinopayPaymentId.String()),
-    }
+    )
     var handlerErr *HandlerError
-    ok := errors.As(err, &handlerErr)
-    if ok {
-        loggerAttrs = append(loggerAttrs, logattr.WithdrawalId(handlerErr.withdrawalId))
+    isHandlerErr := errors.As(err, &handlerErr)
+    if isHandlerErr {
+        logger = logger.With(logattr.WithdrawalId(handlerErr.withdrawalId))
     }
-    logger.Error(err.Error(), loggerAttrs)
+    logger.Error(err.Error())
 }
