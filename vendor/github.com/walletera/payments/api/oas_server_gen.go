@@ -14,6 +14,12 @@ type Handler interface {
 	//
 	// PATCH /withdrawals/{withdrawalId}
 	PatchWithdrawal(ctx context.Context, req *WithdrawalPatchBody, params PatchWithdrawalParams) (PatchWithdrawalRes, error)
+	// PostDeposit implements postDeposit operation.
+	//
+	// Creates a deposit.
+	//
+	// POST /deposits
+	PostDeposit(ctx context.Context, req *DepositPostBody) (PostDepositRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

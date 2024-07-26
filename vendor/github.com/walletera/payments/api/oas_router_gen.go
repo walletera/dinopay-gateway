@@ -49,31 +49,67 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/withdrawals/"
+		case '/': // Prefix: "/"
 			origElem := elem
-			if l := len("/withdrawals/"); len(elem) >= l && elem[0:l] == "/withdrawals/" {
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
-			// Param: "withdrawalId"
-			// Leaf parameter
-			args[0] = elem
-			elem = ""
-
 			if len(elem) == 0 {
-				// Leaf node.
-				switch r.Method {
-				case "PATCH":
-					s.handlePatchWithdrawalRequest([1]string{
-						args[0],
-					}, elemIsEscaped, w, r)
-				default:
-					s.notAllowed(w, r, "PATCH")
+				break
+			}
+			switch elem[0] {
+			case 'd': // Prefix: "deposits"
+				origElem := elem
+				if l := len("deposits"); len(elem) >= l && elem[0:l] == "deposits" {
+					elem = elem[l:]
+				} else {
+					break
 				}
 
-				return
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handlePostDepositRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
+
+				elem = origElem
+			case 'w': // Prefix: "withdrawals/"
+				origElem := elem
+				if l := len("withdrawals/"); len(elem) >= l && elem[0:l] == "withdrawals/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				// Param: "withdrawalId"
+				// Leaf parameter
+				args[0] = elem
+				elem = ""
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "PATCH":
+						s.handlePatchWithdrawalRequest([1]string{
+							args[0],
+						}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "PATCH")
+					}
+
+					return
+				}
+
+				elem = origElem
 			}
 
 			elem = origElem
@@ -157,33 +193,73 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/withdrawals/"
+		case '/': // Prefix: "/"
 			origElem := elem
-			if l := len("/withdrawals/"); len(elem) >= l && elem[0:l] == "/withdrawals/" {
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
-			// Param: "withdrawalId"
-			// Leaf parameter
-			args[0] = elem
-			elem = ""
-
 			if len(elem) == 0 {
-				switch method {
-				case "PATCH":
-					// Leaf: PatchWithdrawal
-					r.name = "PatchWithdrawal"
-					r.summary = "Patches a withdrawal"
-					r.operationID = "patchWithdrawal"
-					r.pathPattern = "/withdrawals/{withdrawalId}"
-					r.args = args
-					r.count = 1
-					return r, true
-				default:
-					return
+				break
+			}
+			switch elem[0] {
+			case 'd': // Prefix: "deposits"
+				origElem := elem
+				if l := len("deposits"); len(elem) >= l && elem[0:l] == "deposits" {
+					elem = elem[l:]
+				} else {
+					break
 				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "POST":
+						r.name = "PostDeposit"
+						r.summary = "Creates a deposit"
+						r.operationID = "postDeposit"
+						r.pathPattern = "/deposits"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+				elem = origElem
+			case 'w': // Prefix: "withdrawals/"
+				origElem := elem
+				if l := len("withdrawals/"); len(elem) >= l && elem[0:l] == "withdrawals/" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				// Param: "withdrawalId"
+				// Leaf parameter
+				args[0] = elem
+				elem = ""
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "PATCH":
+						r.name = "PatchWithdrawal"
+						r.summary = "Patches a withdrawal"
+						r.operationID = "patchWithdrawal"
+						r.pathPattern = "/withdrawals/{withdrawalId}"
+						r.args = args
+						r.count = 1
+						return r, true
+					default:
+						return
+					}
+				}
+
+				elem = origElem
 			}
 
 			elem = origElem

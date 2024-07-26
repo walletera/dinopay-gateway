@@ -9,6 +9,71 @@ import (
 	"github.com/google/uuid"
 )
 
+// Body of the POST /deposits request.
+// Ref: #/components/schemas/depositPostBody
+type DepositPostBody struct {
+	// Internal Id of the deposit.
+	ID uuid.UUID `json:"id"`
+	// Deposit amount.
+	Amount float64 `json:"amount"`
+	// Deposit currency.
+	Currency string `json:"currency"`
+	// The customer that received the deposit.
+	CustomerId uuid.UUID `json:"customerId"`
+	// Id assigned to the operation by the external payment provider.
+	ExternalId uuid.UUID `json:"externalId"`
+}
+
+// GetID returns the value of ID.
+func (s *DepositPostBody) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetAmount returns the value of Amount.
+func (s *DepositPostBody) GetAmount() float64 {
+	return s.Amount
+}
+
+// GetCurrency returns the value of Currency.
+func (s *DepositPostBody) GetCurrency() string {
+	return s.Currency
+}
+
+// GetCustomerId returns the value of CustomerId.
+func (s *DepositPostBody) GetCustomerId() uuid.UUID {
+	return s.CustomerId
+}
+
+// GetExternalId returns the value of ExternalId.
+func (s *DepositPostBody) GetExternalId() uuid.UUID {
+	return s.ExternalId
+}
+
+// SetID sets the value of ID.
+func (s *DepositPostBody) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetAmount sets the value of Amount.
+func (s *DepositPostBody) SetAmount(val float64) {
+	s.Amount = val
+}
+
+// SetCurrency sets the value of Currency.
+func (s *DepositPostBody) SetCurrency(val string) {
+	s.Currency = val
+}
+
+// SetCustomerId sets the value of CustomerId.
+func (s *DepositPostBody) SetCustomerId(val uuid.UUID) {
+	s.CustomerId = val
+}
+
+// SetExternalId sets the value of ExternalId.
+func (s *DepositPostBody) SetExternalId(val uuid.UUID) {
+	s.ExternalId = val
+}
+
 // NewOptUUID returns new OptUUID with value set to v.
 func NewOptUUID(v uuid.UUID) OptUUID {
 	return OptUUID{
@@ -77,6 +142,29 @@ func (*PatchWithdrawalBadRequest) patchWithdrawalRes() {}
 type PatchWithdrawalOK struct{}
 
 func (*PatchWithdrawalOK) patchWithdrawalRes() {}
+
+// A text message describing an error.
+// Ref: #/components/schemas/errorMessage
+type PostDepositBadRequest struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s PostDepositBadRequest) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+func (*PostDepositBadRequest) postDepositRes() {}
+
+// PostDepositCreated is response for PostDeposit operation.
+type PostDepositCreated struct{}
+
+func (*PostDepositCreated) postDepositRes() {}
 
 // Body of the PATH /withdrawal request.
 // Ref: #/components/schemas/withdrawalPatchBody

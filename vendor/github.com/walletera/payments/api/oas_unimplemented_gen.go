@@ -21,3 +21,12 @@ var _ Handler = UnimplementedHandler{}
 func (UnimplementedHandler) PatchWithdrawal(ctx context.Context, req *WithdrawalPatchBody, params PatchWithdrawalParams) (r PatchWithdrawalRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
+
+// PostDeposit implements postDeposit operation.
+//
+// Creates a deposit.
+//
+// POST /deposits
+func (UnimplementedHandler) PostDeposit(ctx context.Context, req *DepositPostBody) (r PostDepositRes, _ error) {
+	return r, ht.ErrNotImplemented
+}

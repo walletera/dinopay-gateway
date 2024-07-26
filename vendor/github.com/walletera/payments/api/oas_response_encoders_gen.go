@@ -35,3 +35,28 @@ func encodePatchWithdrawalResponse(response PatchWithdrawalRes, w http.ResponseW
 		return errors.Errorf("unexpected response type: %T", response)
 	}
 }
+
+func encodePostDepositResponse(response PostDepositRes, w http.ResponseWriter, span trace.Span) error {
+	switch response := response.(type) {
+	case *PostDepositCreated:
+		w.WriteHeader(201)
+		span.SetStatus(codes.Ok, http.StatusText(201))
+
+		return nil
+
+	case *PostDepositBadRequest:
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(400)
+		span.SetStatus(codes.Error, http.StatusText(400))
+
+		writer := w
+		if _, err := io.Copy(writer, response); err != nil {
+			return errors.Wrap(err, "write")
+		}
+
+		return nil
+
+	default:
+		return errors.Errorf("unexpected response type: %T", response)
+	}
+}

@@ -4,3 +4,7 @@ package api
 type PatchWithdrawalRes interface {
 	patchWithdrawalRes()
 }
+
+type PostDepositRes interface {
+	postDepositRes()
+}

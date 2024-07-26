@@ -40,3 +40,31 @@ func decodePatchWithdrawalResponse(resp *http.Response) (res PatchWithdrawalRes,
 	}
 	return res, validate.UnexpectedStatusCode(resp.StatusCode)
 }
+
+func decodePostDepositResponse(resp *http.Response) (res PostDepositRes, _ error) {
+	switch resp.StatusCode {
+	case 201:
+		// Code 201.
+		return &PostDepositCreated{}, nil
+	case 400:
+		// Code 400.
+		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+		if err != nil {
+			return res, errors.Wrap(err, "parse media type")
+		}
+		switch {
+		case ct == "text/html":
+			reader := resp.Body
+			b, err := io.ReadAll(reader)
+			if err != nil {
+				return res, err
+			}
+
+			response := PostDepositBadRequest{Data: bytes.NewReader(b)}
+			return &response, nil
+		default:
+			return res, validate.InvalidContentType(ct)
+		}
+	}
+	return res, validate.UnexpectedStatusCode(resp.StatusCode)
+}
