@@ -28,7 +28,7 @@ func NewEventsVisitorImpl(db events.DB, client *paymentsApi.Client, logger *slog
         db:             db,
         paymentsClient: client,
         deserializer:   NewEventsDeserializer(),
-        logger:         logger.With(logattr.Component("dinopay/EventsVisitorImpl")),
+        logger:         logger.With(logattr.Component("dinopay.EventsVisitorImpl")),
     }
 }
 

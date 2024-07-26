@@ -8,12 +8,15 @@ import (
 
     "github.com/walletera/dinopay-gateway/internal/adapters/dinopay"
     esdbadapter "github.com/walletera/dinopay-gateway/internal/adapters/eventstoredb"
+    dinopayevents "github.com/walletera/dinopay-gateway/internal/domain/events/dinopay"
     gatewayevents "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/payments"
     esdbpkg "github.com/walletera/dinopay-gateway/pkg/eventstoredb"
     "github.com/walletera/dinopay-gateway/pkg/logattr"
+    "github.com/walletera/message-processor/errors"
     "github.com/walletera/message-processor/messages"
     paymentsevents "github.com/walletera/message-processor/payments"
+    "github.com/walletera/message-processor/webhook"
     paymentsapi "github.com/walletera/payments/api"
     "go.uber.org/zap"
     "go.uber.org/zap/exp/zapslog"
@@ -24,6 +27,7 @@ const (
     RabbitMQQueueName                         = "dinopay-gateway"
     ESDB_ByCategoryProjection_OutboundPayment = "$ce-outboundPayment"
     ESDB_SubscriptionGroupName                = "dinopay-gateway"
+    WebhookServerPort                         = 8686
 )
 
 type App struct {
@@ -61,6 +65,20 @@ func (app *App) Run(ctx context.Context) error {
         return fmt.Errorf("failed starting payments rabbitmq processor: %w", err)
     }
 
+    appLogger.Info("payments message processor started")
+
+    dinopayMessageProcessor, err := createDinopayMessageProcessor(app, appLogger)
+    if err != nil {
+        return fmt.Errorf("failed creating dinopay webhook message processor: %w", err)
+    }
+
+    err = dinopayMessageProcessor.Start(ctx)
+    if err != nil {
+        return fmt.Errorf("failed starting payments rabbitmq processor: %w", err)
+    }
+
+    appLogger.Info("dinopay message processor started")
+
     gatewayMessageProcessor, err := createGatewayMessageProcessor(app, appLogger)
     if err != nil {
         return fmt.Errorf("failed creating dinopay message processor: %w", err)
@@ -70,6 +88,8 @@ func (app *App) Run(ctx context.Context) error {
     if err != nil {
         return fmt.Errorf("failed starting dinopay message processor: %w", err)
     }
+
+    appLogger.Info("gateway message processor started")
 
     appLogger.Info("dinopay-gateway started")
     <-ctx.Done()
@@ -119,12 +139,59 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
     eventsDB := esdbadapter.NewDB(esdbClient)
     visitor := payments.NewEventsVisitor(dinopayClient, eventsDB, logger)
     queueName := fmt.Sprintf(RabbitMQQueueName)
-    paymentsMessageProcessor, err := paymentsevents.NewRabbitMQProcessor(visitor, queueName)
+
+    paymentsMessageProcessor, err := paymentsevents.NewRabbitMQProcessor(
+        visitor,
+        queueName,
+        paymentsevents.RabbitMQProcessorOpt{
+            ProcessorOpt: messages.WithErrorCallback(func(processingError errors.ProcessingError) {
+                logger.Error(
+                    "failed processing message",
+                    logattr.Error(processingError.Message()),
+                    logattr.Component("payments-rabbitmq-message-processor"))
+            }),
+        },
+    )
     if err != nil {
         return nil, fmt.Errorf("failed creating payments rabbitmq processor: %w", err)
     }
 
     return paymentsMessageProcessor, nil
+}
+
+func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[dinopayevents.EventsVisitor], error) {
+    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl)
+    if err != nil {
+        return nil, fmt.Errorf("failed creating payments api client: %w", err)
+    }
+    webhookConsumer := webhook.NewServer(WebhookServerPort, webhook.WithLogger(logger.With(logattr.Component("webhook.Server"))))
+    eventsVisitor := dinopayevents.NewEventsVisitorImpl(paymentsClient, logger)
+    return messages.NewProcessor[dinopayevents.EventsVisitor](
+        webhookConsumer,
+        dinopayevents.NewEventsDeserializer(),
+        eventsVisitor,
+        messages.WithErrorCallback(func(processingError errors.ProcessingError) {
+            logger.Error(
+                "failed processing message",
+                logattr.Error(processingError.Message()),
+                logattr.Component("dinopay-webhook-message-processor"))
+        }),
+    ), nil
+    //esdbMessagesConsumer, err := esdbpkg.NewMessagesConsumer(
+    //    app.esdbUrl,
+    //    ESDB_ByCategoryProjection_OutboundPayment,
+    //    ESDB_SubscriptionGroupName,
+    //)
+    //if err != nil {
+    //    return nil, fmt.Errorf("failed creating esdb messages consumer: %w", err)
+    //}
+    //
+    //esdbClient, err := esdbpkg.GetESDBClient(app.esdbUrl)
+    //if err != nil {
+    //    return nil, fmt.Errorf("failed creating esdb client: %w", err)
+    //}
+    //
+    //eventsDB := esdbadapter.NewDB(esdbClient)
 }
 
 func createGatewayMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[gatewayevents.EventsVisitor], error) {
@@ -155,5 +222,11 @@ func createGatewayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
         esdbMessagesConsumer,
         gatewayevents.NewEventsDeserializer(),
         eventsVisitor,
+        messages.WithErrorCallback(func(processingError errors.ProcessingError) {
+            logger.Error(
+                "failed processing message",
+                logattr.Error(processingError.Message()),
+                logattr.Component("gateway-esdb-message-processor"))
+        }),
     ), nil
 }

@@ -28,7 +28,7 @@ func NewEventsVisitor(dinopayClient dinopay.Client, esDB events.DB, logger *slog
     return &EventsVisitor{
         dinopayClient: dinopayClient,
         esDB:          esDB,
-        logger:        logger.With(logattr.Component("payments/EventsVisitor")),
+        logger:        logger.With(logattr.Component("payments.EventsVisitor")),
     }
 }
 
@@ -42,8 +42,6 @@ func (ev *EventsVisitor) VisitWithdrawalCreated(ctx context.Context, withdrawalC
     if err != nil {
         handleError(logger, "failed parsing WithdrawalCreated uuid", err)
     }
-
-    logger.Debug("event received")
 
     dinopayResp, err := ev.dinopayClient.CreatePayment(ctx, &dinopayapi.Payment{
         Amount:   withdrawalCreated.Amount,
