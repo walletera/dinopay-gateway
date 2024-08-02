@@ -13,8 +13,8 @@ import (
 )
 
 type EventsVisitor interface {
-    VisitOutboundPaymentCreated(ctx context.Context, outboundPaymentCreated OutboundPaymentCreated) procerrors.ProcessingError
-    VisitOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated OutboundPaymentUpdated) procerrors.ProcessingError
+    VisitOutboundPaymentCreated(ctx context.Context, outboundPaymentCreated PaymentCreated) procerrors.ProcessingError
+    VisitOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated PaymentUpdated) procerrors.ProcessingError
 }
 
 type EventsVisitorImpl struct {
@@ -33,7 +33,7 @@ func NewEventsVisitorImpl(db events.DB, client *paymentsApi.Client, logger *slog
     }
 }
 
-func (ev *EventsVisitorImpl) VisitOutboundPaymentCreated(ctx context.Context, outboundPaymentCreated OutboundPaymentCreated) procerrors.ProcessingError {
+func (ev *EventsVisitorImpl) VisitOutboundPaymentCreated(ctx context.Context, outboundPaymentCreated PaymentCreated) procerrors.ProcessingError {
     err := NewOutboundPaymentCreatedHandler(ev.paymentsClient).Handle(ctx, outboundPaymentCreated)
     if err != nil {
         ev.logger.Error(
@@ -46,7 +46,7 @@ func (ev *EventsVisitorImpl) VisitOutboundPaymentCreated(ctx context.Context, ou
     return nil
 }
 
-func (ev *EventsVisitorImpl) VisitOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated OutboundPaymentUpdated) procerrors.ProcessingError {
+func (ev *EventsVisitorImpl) VisitOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated PaymentUpdated) procerrors.ProcessingError {
     err := NewOutboundPaymentUpdatedHandler(ev.db, ev.paymentsClient).Handle(ctx, outboundPaymentUpdated)
     if err != nil {
         logOutboundPaymentUpdatedHandlerError(ev.logger, outboundPaymentUpdated, err)
@@ -66,7 +66,7 @@ func (ev *EventsVisitorImpl) VisitInboundPaymentReceived(ctx context.Context, in
     return nil
 }
 
-func logOutboundPaymentUpdatedHandlerError(logger *slog.Logger, outboundPaymentUpdated OutboundPaymentUpdated, err error) {
+func logOutboundPaymentUpdatedHandlerError(logger *slog.Logger, outboundPaymentUpdated PaymentUpdated, err error) {
     logger = logger.With(
         logattr.EventType(outboundPaymentUpdated.Type()),
         logattr.DinopayPaymentId(outboundPaymentUpdated.DinopayPaymentId.String()),

@@ -24,14 +24,14 @@ func (d *EventsDeserializer) Deserialize(rawPayload []byte) (events.Event[Events
     }
     switch event.Type {
     case "OutboundPaymentCreated":
-        var outboundPaymentCreated OutboundPaymentCreated
+        var outboundPaymentCreated PaymentCreated
         err := json.Unmarshal(event.Data, &outboundPaymentCreated)
         if err != nil {
             log.Printf("error deserializing OutboundPaymentCreated event data %s: %s", event.Data, err.Error())
         }
         return outboundPaymentCreated, nil
     case "OutboundPaymentUpdated":
-        var outboundPaymentUpdated OutboundPaymentUpdated
+        var outboundPaymentUpdated PaymentUpdated
         err := json.Unmarshal(event.Data, &outboundPaymentUpdated)
         if err != nil {
             log.Printf("error deserializing OutboundPaymentUpdated event data %s: %s", event.Data, err.Error())

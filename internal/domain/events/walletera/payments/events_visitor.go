@@ -75,7 +75,7 @@ func (ev *EventsVisitor) VisitWithdrawalCreated(ctx context.Context, withdrawalC
 
     logger.Info("dinopay payment created successfully")
 
-    outboundPaymentCreated := outbound.OutboundPaymentCreated{
+    outboundPaymentCreated := outbound.PaymentCreated{
         Id:                   uuid.New(),
         WithdrawalId:         withdrawalId,
         DinopayPaymentId:     payment.ID.Value,

@@ -11,43 +11,44 @@ import (
     "github.com/walletera/message-processor/events"
 )
 
-type OutboundPaymentUpdated struct {
+var _ events.Event[EventsVisitor] = PaymentCreated{}
+
+type PaymentCreated struct {
     Id                   uuid.UUID `json:"id,omitempty"`
+    WithdrawalId         uuid.UUID `json:"withdrawal_id,omitempty"`
     DinopayPaymentId     uuid.UUID `json:"dinopay_payment_id,omitempty"`
     DinopayPaymentStatus string    `json:"dinopay_payment_status,omitempty"`
     CreatedAt            int64     `json:"created_at,omitempty"`
 }
 
-var _ events.Event[EventsVisitor] = OutboundPaymentUpdated{}
-
-func (o OutboundPaymentUpdated) ID() string {
+func (o PaymentCreated) ID() string {
     return fmt.Sprintf("%s-%s", o.Type(), o.Id)
 }
 
-func (o OutboundPaymentUpdated) Type() string {
-    return "OutboundPaymentUpdated"
+func (o PaymentCreated) Type() string {
+    return "OutboundPaymentCreated"
 }
 
-func (o OutboundPaymentUpdated) DataContentType() string {
+func (o PaymentCreated) DataContentType() string {
     return "application/json"
 }
 
-func (o OutboundPaymentUpdated) CorrelationID() string {
+func (o PaymentCreated) CorrelationID() string {
     panic("not implemented yet")
 }
 
-func (o OutboundPaymentUpdated) Serialize() ([]byte, error) {
+func (o PaymentCreated) Accept(ctx context.Context, visitor EventsVisitor) errors.ProcessingError {
+    return visitor.VisitOutboundPaymentCreated(ctx, o)
+}
+
+func (o PaymentCreated) Serialize() ([]byte, error) {
     data, err := json.Marshal(o)
     if err != nil {
-        return nil, fmt.Errorf("failed serializing OutbounPaymentUpdated event: %w", err)
+        return nil, fmt.Errorf("failed serializing OutbounPaymentCreated event: %w", err)
     }
     envelope := gateway.EventEnvelope{
-        Type: "OutboundPaymentUpdated",
+        Type: "OutboundPaymentCreated",
         Data: data,
     }
     return json.Marshal(envelope)
-}
-
-func (o OutboundPaymentUpdated) Accept(ctx context.Context, visitor EventsVisitor) errors.ProcessingError {
-    return visitor.VisitOutboundPaymentUpdated(ctx, o)
 }

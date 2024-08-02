@@ -18,23 +18,23 @@ func (h *HandlerError) Error() string {
     return fmt.Sprintf("error handling DinopayOutboundPaymentUpdated event for withdrawal %s", h.withdrawalId)
 }
 
-type OutboundPaymentUpdatedHandler struct {
+type PaymentUpdatedHandler struct {
     db             events.DB
     paymentsClient *paymentsApi.Client
     deserializer   *EventsDeserializer
 
-    outboundPaymentCreated *OutboundPaymentCreated
+    outboundPaymentCreated *PaymentCreated
 }
 
-func NewOutboundPaymentUpdatedHandler(db events.DB, client *paymentsApi.Client) *OutboundPaymentUpdatedHandler {
-    return &OutboundPaymentUpdatedHandler{
+func NewOutboundPaymentUpdatedHandler(db events.DB, client *paymentsApi.Client) *PaymentUpdatedHandler {
+    return &PaymentUpdatedHandler{
         db:             db,
         paymentsClient: client,
         deserializer:   NewEventsDeserializer(),
     }
 }
 
-func (h *OutboundPaymentUpdatedHandler) Handle(ctx context.Context, outboundPaymentUpdated OutboundPaymentUpdated) errors.ProcessingError {
+func (h *PaymentUpdatedHandler) Handle(ctx context.Context, outboundPaymentUpdated PaymentUpdated) errors.ProcessingError {
     streamName := BuildOutboundPaymentStreamName(outboundPaymentUpdated.DinopayPaymentId.String())
     rawEvents, err := h.db.ReadEvents(streamName)
     if err != nil {
@@ -53,12 +53,12 @@ func (h *OutboundPaymentUpdatedHandler) Handle(ctx context.Context, outboundPaym
     return nil
 }
 
-func (h *OutboundPaymentUpdatedHandler) VisitOutboundPaymentCreated(_ context.Context, outboundPaymentCreated OutboundPaymentCreated) errors.ProcessingError {
+func (h *PaymentUpdatedHandler) VisitOutboundPaymentCreated(_ context.Context, outboundPaymentCreated PaymentCreated) errors.ProcessingError {
     h.outboundPaymentCreated = &outboundPaymentCreated
     return nil
 }
 
-func (h *OutboundPaymentUpdatedHandler) VisitOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated OutboundPaymentUpdated) errors.ProcessingError {
+func (h *PaymentUpdatedHandler) VisitOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated PaymentUpdated) errors.ProcessingError {
     if h.outboundPaymentCreated == nil {
         return errors.NewInternalError("missing OutboundPaymentCreated event")
     }
