@@ -69,3 +69,7 @@ Feature: process DinoPay webhook event PaymentCreated
     """
     DinoPay event PaymentCreated processed successfully
     """
+    And the dinopay-gateway produces the following log:
+    """
+    Gateway event InboundPaymentReceived processed successfully
+    """

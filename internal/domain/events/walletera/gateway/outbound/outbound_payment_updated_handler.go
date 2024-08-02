@@ -1,4 +1,4 @@
-package gateway
+package outbound
 
 import (
     "context"
@@ -35,7 +35,7 @@ func NewOutboundPaymentUpdatedHandler(db events.DB, client *paymentsApi.Client) 
 }
 
 func (h *OutboundPaymentUpdatedHandler) Handle(ctx context.Context, outboundPaymentUpdated OutboundPaymentUpdated) errors.ProcessingError {
-    streamName := BuildStreamName(outboundPaymentUpdated.DinopayPaymentId.String())
+    streamName := BuildOutboundPaymentStreamName(outboundPaymentUpdated.DinopayPaymentId.String())
     rawEvents, err := h.db.ReadEvents(streamName)
     if err != nil {
         return errors.NewInternalError(fmt.Sprintf("failed retrieving events from stream %s: %s", streamName, err.Error()))

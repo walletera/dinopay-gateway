@@ -74,9 +74,14 @@ func aRunningDinopayGateway(ctx context.Context) (context.Context, error) {
         return ctx, fmt.Errorf("failed enabling by-category projection: %w", err)
     }
 
-    ctx, err = anEventstoreDBPersistentSubscriptionForCategoryOutboundPayment(ctx)
+    ctx, err = anEventstoreDBPersistentSubscriptionForCategory(ctx, app.ESDB_ByCategoryProjection_OutboundPayment)
     if err != nil {
-        return ctx, fmt.Errorf("failed creating persistent subscription on esdb: %w", err)
+        return ctx, fmt.Errorf("failed creating persistent subscription for $ce-outboundPayment category on esdb: %w", err)
+    }
+
+    ctx, err = anEventstoreDBPersistentSubscriptionForCategory(ctx, app.ESDB_ByCategoryProjection_InboundPayment)
+    if err != nil {
+        return ctx, fmt.Errorf("failed creating persistent subscription for $ce-inboundPayment category on esdb: %w", err)
     }
 
     logHandler := logsWatcherFromCtx(ctx).DecoratedHandler()
@@ -127,7 +132,7 @@ func esdbByCategoryProjectionEnabled(ctx context.Context) (context.Context, erro
     return ctx, nil
 }
 
-func anEventstoreDBPersistentSubscriptionForCategoryOutboundPayment(ctx context.Context) (context.Context, error) {
+func anEventstoreDBPersistentSubscriptionForCategory(ctx context.Context, categoryName string) (context.Context, error) {
     subscriptionSettings := esdb.SubscriptionSettingsDefault()
     subscriptionSettings.ResolveLinkTos = true
     subscriptionSettings.MaxRetryCount = 3
@@ -139,7 +144,7 @@ func anEventstoreDBPersistentSubscriptionForCategoryOutboundPayment(ctx context.
 
     err = esdbClient.CreatePersistentSubscription(
         context.Background(),
-        app.ESDB_ByCategoryProjection_OutboundPayment,
+        categoryName,
         app.ESDB_SubscriptionGroupName,
         esdb.PersistentStreamSubscriptionOptions{
             Settings: &subscriptionSettings,

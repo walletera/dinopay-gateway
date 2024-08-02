@@ -1,10 +1,11 @@
-package gateway
+package outbound
 
 import (
     "encoding/json"
     "fmt"
     "log"
 
+    "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway"
     "github.com/walletera/message-processor/events"
 )
 
@@ -16,7 +17,7 @@ func NewEventsDeserializer() *EventsDeserializer {
 }
 
 func (d *EventsDeserializer) Deserialize(rawPayload []byte) (events.Event[EventsVisitor], error) {
-    var event EventEnvelope
+    var event gateway.EventEnvelope
     err := json.Unmarshal(rawPayload, &event)
     if err != nil {
         return nil, fmt.Errorf("error deserializing message with payload %s: %w", rawPayload, err)
