@@ -1,34 +1,34 @@
-Feature: process WithdrawalCreated event
+Feature: process PaymentCreated event
   Walletera users with funds on their accounts want to be able to Withdraw those funds (totally or partially)
   to DinoPay accounts.
-  - When a Withdrawal is created, A WithdrawalCreated event is published by the Payments Service.
-  - The DinoPay Gateway must listen for WithdrawalCreated events.
-  - Whenever a WithdrawalCreated event arrives the dinopay-gateway must create a corresponding Payment on DinoPay API.
+  - When a Withdrawal is created, A PaymentCreated event is published by the Payments Service.
+  - The DinoPay Gateway must listen for PaymentCreated events.
+  - Whenever a PaymentCreated event arrives the dinopay-gateway must create a corresponding Payment on DinoPay API.
 
   Background: the dinopay-gateway is up and running
     Given a running dinopay-gateway
 
-  Scenario: withdrawal created event is processed successfully
-    Given a withdrawal created event:
+  Scenario: payment created event is processed successfully
+    Given a payment created event:
     """json
     {
-      "type": "WithdrawalCreated",
+      "id": "0fg1833e-3438-4908-b90a-5721670cb067",
+      "type": "PaymentCreated",
       "data": {
-         "id": "0ae1733e-7538-4908-b90a-5721670cb093",
-         "user_id": "2432318c-4ff3-4ac0-b734-9b61779e2e46",
-         "psp_id": "dinopay",
-         "external_id": null,
-         "amount": 100,
-         "currency": "USD",
-         "status": "pending",
-         "beneficiary": {
-           "id": "2f98dbe7-72ab-4167-9be5-ecd3608b55e4",
-           "description": "Richard Roe DinoPay account",
-           "account": {
-            "holder": "Richard Roe",
-            "number": 1200079635
-           }
-         }
+        "id": "0ae1733e-7538-4908-b90a-5721670cb093",
+        "amount": 100,
+        "currency": "USD",
+        "direction": "outbound",
+        "customerId": "2432318c-4ff3-4ac0-b734-9b61779e2e46",
+        "status": "pending",
+        "beneficiary": {
+          "bankName": "dinopay",
+          "bankId": "dinopay",
+          "accountHolder": "Richard Roe",
+          "routingKey": "123456789123456",
+          "accountNumber": "1200079635"
+        },
+        "createdAt": "2024-10-04T00:00:00Z"
       }
     }
     """
@@ -86,14 +86,14 @@ Feature: process WithdrawalCreated event
       }
     }
     """
-    And  a payments endpoint to update withdrawals:
+    And  a payments endpoint to update payments:
     # the json below is a mockserver expectation
     """json
     {
       "id": "updateWithdrawalSucceed",
       "httpRequest" : {
         "method": "PATCH",
-        "path": "/withdrawals/0ae1733e-7538-4908-b90a-5721670cb093",
+        "path": "/payments/0ae1733e-7538-4908-b90a-5721670cb093",
         "body": {
             "type": "JSON",
             "json": {
@@ -120,37 +120,37 @@ Feature: process WithdrawalCreated event
     """
     When the event is published
     Then the dinopay-gateway creates the corresponding payment on the DinoPay API
-    And the dinopay-gateway updates the withdrawal on payments service
+    And the dinopay-gateway updates the payment on payments service
     And the dinopay-gateway produces the following log:
     """
-    WithdrawalCreated event processed successfully
+    PaymentCreated event processed successfully
     """
     And the dinopay-gateway produces the following log:
     """
     OutboundPaymentCreated event processed successfully
     """
 
-  Scenario: withdrawal created event processing failed when trying to create payment on Dinopay
-    Given a withdrawal created event:
+  Scenario: payment created event processing failed when trying to create payment on Dinopay
+    Given a payment created event:
     """json
     {
-      "type": "WithdrawalCreated",
+      "id": "0fg1833e-3438-4908-b90a-5721670cb067",
+      "type": "PaymentCreated",
       "data": {
-         "id": "0ae1733e-7538-4908-b90a-5721670cb093",
-         "user_id": "2432318c-4ff3-4ac0-b734-9b61779e2e46",
-         "psp_id": "dinopay",
-         "external_id": null,
-         "amount": 100,
-         "currency": "USD",
-         "status": "pending",
-         "beneficiary": {
-           "id": "2f98dbe7-72ab-4167-9be5-ecd3608b55e4",
-           "description": "Richard Roe DinoPay account",
-           "account": {
-            "holder": "Richard Roe",
-            "number": 1200079635
-           }
-         }
+        "id": "0ae1733e-7538-4908-b90a-5721670cb093",
+        "amount": 100,
+        "currency": "USD",
+        "direction": "outbound",
+        "customerId": "2432318c-4ff3-4ac0-b734-9b61779e2e46",
+        "status": "pending",
+        "beneficiary": {
+          "bankName": "dinopay",
+          "bankId": "dinopay",
+          "accountHolder": "Richard Roe",
+          "routingKey": "123456789123456",
+          "accountNumber": "1200079635"
+        },
+        "createdAt": "2024-10-04T00:00:00Z"
       }
     }
     """

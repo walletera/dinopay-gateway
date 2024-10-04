@@ -18,7 +18,7 @@ const (
     expectationTimeout                               = 5 * time.Second
 )
 
-func TestWithdrawalCreatedEventProcessing(t *testing.T) {
+func TestPaymentCreatedEventProcessing(t *testing.T) {
 
     suite := godog.TestSuite{
         ScenarioInitializer: InitializeProcessWithdrawalCreatedScenario,
@@ -37,7 +37,7 @@ func TestWithdrawalCreatedEventProcessing(t *testing.T) {
 func InitializeProcessWithdrawalCreatedScenario(ctx *godog.ScenarioContext) {
     ctx.Before(beforeScenarioHook)
     ctx.Given(`^a running dinopay-gateway$`, aRunningDinopayGateway)
-    ctx.Given(`^a withdrawal created event:$`, aWithdrawalCreatedEvent)
+    ctx.Given(`^a payment created event:$`, aWithdrawalCreatedEvent)
     ctx.Given(`^a dinopay endpoint to create payments:$`, aDinopayEndpointToCreatePayments)
     ctx.Given(`^a payments endpoint to update withdrawals:$`, aPaymentsEndpointToUpdateWithdrawals)
     ctx.When(`^the event is published$`, theEventIsPublished)

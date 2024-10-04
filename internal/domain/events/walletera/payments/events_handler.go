@@ -4,7 +4,6 @@ import (
     "context"
     "fmt"
     "log/slog"
-    "strconv"
 
     "github.com/google/uuid"
     "github.com/walletera/dinopay-gateway/internal/domain/events"
@@ -13,49 +12,50 @@ import (
     "github.com/walletera/dinopay-gateway/pkg/logattr"
     dinopayapi "github.com/walletera/dinopay/api"
     "github.com/walletera/message-processor/errors"
-    "github.com/walletera/message-processor/payments"
+    paymentEvents "github.com/walletera/payments-types/events"
 )
 
-type EventsVisitor struct {
+type EventsHandler struct {
     dinopayClient dinopay.Client
     esDB          events.DB
     logger        *slog.Logger
 }
 
-var _ payments.EventsVisitor = (*EventsVisitor)(nil)
+var _ paymentEvents.Handler = (*EventsHandler)(nil)
 
-func NewEventsVisitor(dinopayClient dinopay.Client, esDB events.DB, logger *slog.Logger, ) *EventsVisitor {
-    return &EventsVisitor{
+func NewEventsHandler(dinopayClient dinopay.Client, esDB events.DB, logger *slog.Logger, ) *EventsHandler {
+    return &EventsHandler{
         dinopayClient: dinopayClient,
         esDB:          esDB,
-        logger:        logger.With(logattr.Component("payments.EventsVisitor")),
+        logger:        logger.With(logattr.Component("payments.EventsHandler")),
     }
 }
 
-func (ev *EventsVisitor) VisitWithdrawalCreated(ctx context.Context, withdrawalCreated payments.WithdrawalCreatedEvent) errors.ProcessingError {
+func (ev *EventsHandler) HandlePaymentCreated(ctx context.Context, paymentCreated paymentEvents.PaymentCreated) errors.ProcessingError {
+    paymentCreatedId := paymentCreated.Data.ID.Value.String()
     logger := ev.logger.With(
-        logattr.EventType("WithdrawalCreated"),
-        logattr.WithdrawalId(withdrawalCreated.Id),
+        logattr.EventType("paymentCreated"),
+        logattr.WithdrawalId(paymentCreatedId),
     )
 
-    withdrawalId, err := uuid.Parse(withdrawalCreated.Id)
+    withdrawalId, err := uuid.Parse(paymentCreatedId)
     if err != nil {
-        handleError(logger, "failed parsing WithdrawalCreated uuid", err)
+        handleError(logger, "failed parsing paymentCreated uuid", err)
     }
 
     dinopayResp, err := ev.dinopayClient.CreatePayment(ctx, &dinopayapi.Payment{
-        Amount:   withdrawalCreated.Amount,
-        Currency: withdrawalCreated.Currency,
+        Amount:   paymentCreated.Data.Amount,
+        Currency: paymentCreated.Data.Currency,
         SourceAccount: dinopayapi.Account{
             AccountHolder: "hardcodedSourceAccountHolder",
             AccountNumber: "hardcodedSourceAccountNumber",
         },
         DestinationAccount: dinopayapi.Account{
-            AccountHolder: withdrawalCreated.Beneficiary.Account.Holder,
-            AccountNumber: strconv.Itoa(withdrawalCreated.Beneficiary.Account.Number),
+            AccountHolder: paymentCreated.Data.Beneficiary.Value.AccountHolder.Value,
+            AccountNumber: paymentCreated.Data.Beneficiary.Value.AccountNumber.Value,
         },
         CustomerTransactionId: dinopayapi.OptString{
-            Value: withdrawalCreated.Id,
+            Value: paymentCreatedId,
             Set:   true,
         },
     })
@@ -87,9 +87,14 @@ func (ev *EventsVisitor) VisitWithdrawalCreated(ctx context.Context, withdrawalC
         return errors.NewInternalError(fmt.Sprintf("failed adding OutboundPaymentCreated event to the repository: %s", err.Error()))
     }
 
-    logger.Info("WithdrawalCreated event processed successfully")
+    logger.Info("PaymentCreated event processed successfully")
 
     return nil
+}
+
+func (ev *EventsHandler) HandlePaymentUpdated(ctx context.Context, paymentCreatedEvent paymentEvents.PaymentUpdated) errors.ProcessingError {
+    //TODO implement me
+    panic("implement me")
 }
 
 func handleError(logger *slog.Logger, errMsg string, err error) errors.ProcessingError {

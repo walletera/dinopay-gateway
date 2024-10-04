@@ -16,8 +16,9 @@ import (
     "github.com/walletera/dinopay-gateway/pkg/logattr"
     "github.com/walletera/message-processor/errors"
     "github.com/walletera/message-processor/messages"
-    paymentsevents "github.com/walletera/message-processor/payments"
+    "github.com/walletera/message-processor/rabbitmq"
     "github.com/walletera/message-processor/webhook"
+    paymentsevents "github.com/walletera/payments-types/events"
     paymentsapi "github.com/walletera/payments/api"
     "go.uber.org/zap"
     "go.uber.org/zap/exp/zapslog"
@@ -25,6 +26,9 @@ import (
 )
 
 const (
+    RabbitMQExchangeName                      = "payments"
+    RabbitMQExchangeType                      = "topic"
+    RabbitMQRoutingKey                        = "payments.events"
     RabbitMQQueueName                         = "dinopay-gateway"
     ESDB_ByCategoryProjection_OutboundPayment = "$ce-outboundPayment"
     ESDB_ByCategoryProjection_InboundPayment  = "$ce-inboundPayment"
@@ -139,7 +143,7 @@ func newZapLogger() (*zap.Logger, error) {
     return zapConfig.Build()
 }
 
-func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[paymentsevents.EventsVisitor], error) {
+func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[paymentsevents.Handler], error) {
     dinopayClient, err := dinopay.NewClient(app.dinopayUrl)
     if err != nil {
         return nil, fmt.Errorf("failed parsing dinopay url %s: %w", app.dinopayUrl, err)
@@ -151,19 +155,28 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
     }
 
     eventsDB := esdbadapter.NewDB(esdbClient)
-    visitor := payments.NewEventsVisitor(dinopayClient, eventsDB, logger)
+    handler := payments.NewEventsHandler(dinopayClient, eventsDB, logger)
     queueName := fmt.Sprintf(RabbitMQQueueName)
 
-    paymentsMessageProcessor, err := paymentsevents.NewRabbitMQProcessor(
-        visitor,
-        queueName,
-        paymentsevents.RabbitMQProcessorOpt{
-            ProcessorOpt: withErrorCallback(
-                logger.With(
-                    logattr.Component("payments.rabbitmq.MessageProcessor")),
-            ),
-        },
+    rabbitMQClient, err := rabbitmq.NewClient(
+        rabbitmq.WithExchangeName(RabbitMQExchangeName),
+        rabbitmq.WithExchangeType(RabbitMQExchangeType),
+        rabbitmq.WithConsumerRoutingKeys(RabbitMQRoutingKey),
+        rabbitmq.WithQueueName(queueName),
     )
+    if err != nil {
+        return nil, fmt.Errorf("creating rabbitmq client: %w", err)
+    }
+
+    paymentsMessageProcessor, err := messages.NewProcessor[paymentsevents.Handler](
+        rabbitMQClient,
+        paymentsevents.NewDeserializer(logger),
+        handler,
+        withErrorCallback(
+            logger.With(
+                logattr.Component("payments.rabbitmq.MessageProcessor")),
+        ),
+    ), nil
     if err != nil {
         return nil, fmt.Errorf("failed creating payments rabbitmq processor: %w", err)
     }
