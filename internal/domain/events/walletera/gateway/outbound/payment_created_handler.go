@@ -3,21 +3,21 @@ package outbound
 import (
     "context"
 
-    paymentsApi "github.com/walletera/payments/api"
+    paymentsapi "github.com/walletera/payments-types/api"
 )
 
 type PaymentCreatedHandler struct {
-    client *paymentsApi.Client
+    client *paymentsapi.Client
 }
 
-func NewOutboundPaymentCreatedHandler(client *paymentsApi.Client) *PaymentCreatedHandler {
+func NewOutboundPaymentCreatedHandler(client *paymentsapi.Client) *PaymentCreatedHandler {
     return &PaymentCreatedHandler{
         client: client,
     }
 }
 
 func (h *PaymentCreatedHandler) Handle(ctx context.Context, outboundPaymentCreated PaymentCreated) error {
-    return updateWithdrawalStatus(
+    return updatePaymentStatus(
         ctx,
         h.client,
         outboundPaymentCreated.WithdrawalId,

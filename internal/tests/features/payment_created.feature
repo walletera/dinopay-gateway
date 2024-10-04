@@ -9,7 +9,7 @@ Feature: process PaymentCreated event
     Given a running dinopay-gateway
 
   Scenario: payment created event is processed successfully
-    Given a payment created event:
+    Given a PaymentCreated event:
     """json
     {
       "id": "0fg1833e-3438-4908-b90a-5721670cb067",
@@ -90,7 +90,7 @@ Feature: process PaymentCreated event
     # the json below is a mockserver expectation
     """json
     {
-      "id": "updateWithdrawalSucceed",
+      "id": "updatePaymentSucceed",
       "httpRequest" : {
         "method": "PATCH",
         "path": "/payments/0ae1733e-7538-4908-b90a-5721670cb093",
@@ -131,7 +131,7 @@ Feature: process PaymentCreated event
     """
 
   Scenario: payment created event processing failed when trying to create payment on Dinopay
-    Given a payment created event:
+    Given a PaymentCreated event:
     """json
     {
       "id": "0fg1833e-3438-4908-b90a-5721670cb067",

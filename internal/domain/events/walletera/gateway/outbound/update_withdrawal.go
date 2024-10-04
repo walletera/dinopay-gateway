@@ -5,42 +5,43 @@ import (
     "fmt"
 
     "github.com/google/uuid"
-    dinopayApi "github.com/walletera/dinopay/api"
-    paymentsApi "github.com/walletera/payments/api"
+    dinopayapi "github.com/walletera/dinopay/api"
+    paymentsapi "github.com/walletera/payments-types/api"
 )
 
-func updateWithdrawalStatus(ctx context.Context, client *paymentsApi.Client, withdrawalId uuid.UUID, dinopayPaymentId uuid.UUID, dinopayPaymentStatus string) error {
+func updatePaymentStatus(ctx context.Context, client *paymentsapi.Client, paymentId uuid.UUID, dinopayPaymentId uuid.UUID, dinopayPaymentStatus string) error {
     status, err := dinopayStatus2PaymentsStatus(dinopayPaymentStatus)
     if err != nil {
         return err
     }
-    _, err = client.PatchWithdrawal(ctx,
-        &paymentsApi.WithdrawalPatchBody{
-            ExternalId: paymentsApi.OptUUID{
+    _, err = client.PatchPayment(
+        ctx,
+        &paymentsapi.PaymentUpdate{
+            PaymentId: paymentId,
+            ExternalId: paymentsapi.OptUUID{
                 Value: dinopayPaymentId,
                 Set:   true,
             },
             Status: status,
         },
-        paymentsApi.PatchWithdrawalParams{
-            WithdrawalId: withdrawalId,
-        },
-    )
+        paymentsapi.PatchPaymentParams{
+            PaymentId: paymentId,
+        })
     if err != nil {
         return fmt.Errorf("failed updating withdrawal in payments service: %w", err)
     }
     return nil
 }
 
-func dinopayStatus2PaymentsStatus(dinopayStatus string) (paymentsApi.WithdrawalPatchBodyStatus, error) {
-    var status paymentsApi.WithdrawalPatchBodyStatus
+func dinopayStatus2PaymentsStatus(dinopayStatus string) (paymentsapi.PaymentStatus, error) {
+    var status paymentsapi.PaymentStatus
     switch dinopayStatus {
-    case string(dinopayApi.PaymentStatusPending):
-        status = paymentsApi.WithdrawalPatchBodyStatusPending
-    case string(dinopayApi.PaymentStatusConfirmed):
-        status = paymentsApi.WithdrawalPatchBodyStatusPending
-    case string(paymentsApi.WithdrawalPatchBodyStatusRejected):
-        status = paymentsApi.WithdrawalPatchBodyStatusRejected
+    case string(dinopayapi.PaymentStatusPending):
+        status = paymentsapi.PaymentStatusPending
+    case string(dinopayapi.PaymentStatusConfirmed):
+        status = paymentsapi.PaymentStatusConfirmed
+    case string(dinopayapi.PaymentStatusRejected):
+        status = paymentsapi.PaymentStatusFailed
     default:
         return "", fmt.Errorf("unknown dinopay payment status %s", dinopayStatus)
     }

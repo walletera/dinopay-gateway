@@ -5,7 +5,7 @@ Feature: process DinoPay webhook event PaymentCreated
     Given a running dinopay-gateway
 
   Scenario: the payment is valid and matches the accountNumber of a walletera user
-    Given a PaymentCreated event:
+    Given a DinoPay PaymentCreated event:
     """json
     {
       "id": "647f9176-466a-4d8c-b027-d53b4da77d4d",
@@ -28,14 +28,14 @@ Feature: process DinoPay webhook event PaymentCreated
       }
     }
     """
-    And  a payments endpoint to create deposits:
+    And  a payments endpoint to create payments:
     # the json below is a mockserver expectation
     """json
     {
       "id": "postDepositSucceed",
       "httpRequest" : {
         "method": "POST",
-        "path": "/deposits",
+        "path": "/payments",
         "body": {
             "type": "JSON",
             "json": {

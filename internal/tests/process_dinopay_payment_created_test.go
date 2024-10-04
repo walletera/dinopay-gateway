@@ -35,15 +35,15 @@ func TestDinopayPaymentCreatedEventProcessing(t *testing.T) {
 func InitializeProcessDinopayPaymentCreatedScenario(ctx *godog.ScenarioContext) {
     ctx.Before(beforeScenarioHook)
     ctx.Step(`^a running dinopay-gateway$`, aRunningDinopayGateway)
-    ctx.Step(`^a PaymentCreated event:$`, aPaymentCreatedEvent)
-    ctx.Step(`^a payments endpoint to create deposits:$`, aPaymentsEndpointToCreateDeposits)
+    ctx.Step(`^a DinoPay PaymentCreated event:$`, aDinoPayPaymentCreatedEvent)
+    ctx.Step(`^a payments endpoint to create payments:$`, aPaymentsEndpointToCreateDeposits)
     ctx.When(`^the webhook event is received$`, theWebhookEventIsReceived)
     ctx.Step(`^the dinopay-gateway creates the corresponding payment on the Payments API$`, theDinopaygatewayCreatesTheCorrespondingPaymentOnThePaymentsAPI)
     ctx.Step(`^the dinopay-gateway produces the following log:$`, theDinopayGatewayProducesTheFollowingLog)
     ctx.After(afterScenarioHook)
 }
 
-func aPaymentCreatedEvent(ctx context.Context, event *godog.DocString) (context.Context, error) {
+func aDinoPayPaymentCreatedEvent(ctx context.Context, event *godog.DocString) (context.Context, error) {
     if event == nil || len(event.Content) == 0 {
         return ctx, fmt.Errorf("the WithdrawalCreated event is empty or was not defined")
     }

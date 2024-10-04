@@ -6,7 +6,7 @@ import (
 
     "github.com/walletera/dinopay-gateway/internal/domain/events"
     "github.com/walletera/message-processor/errors"
-    paymentsApi "github.com/walletera/payments/api"
+    paymentsApi "github.com/walletera/payments-types/api"
 )
 
 type HandlerError struct {
@@ -62,7 +62,7 @@ func (h *PaymentUpdatedHandler) VisitOutboundPaymentUpdated(ctx context.Context,
     if h.outboundPaymentCreated == nil {
         return errors.NewInternalError("missing OutboundPaymentCreated event")
     }
-    err := updateWithdrawalStatus(ctx, h.paymentsClient, h.outboundPaymentCreated.WithdrawalId, outboundPaymentUpdated.DinopayPaymentId, outboundPaymentUpdated.DinopayPaymentStatus)
+    err := updatePaymentStatus(ctx, h.paymentsClient, h.outboundPaymentCreated.WithdrawalId, outboundPaymentUpdated.DinopayPaymentId, outboundPaymentUpdated.DinopayPaymentStatus)
     if err != nil {
         return errors.NewInternalError(err.Error())
     }

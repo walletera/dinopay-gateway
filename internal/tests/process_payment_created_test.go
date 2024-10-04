@@ -24,7 +24,7 @@ func TestPaymentCreatedEventProcessing(t *testing.T) {
         ScenarioInitializer: InitializeProcessWithdrawalCreatedScenario,
         Options: &godog.Options{
             Format:   "pretty",
-            Paths:    []string{"features"},
+            Paths:    []string{"features/payment_created.feature"},
             TestingT: t, // Testing instance that will run subtests.
         },
     }
@@ -37,18 +37,18 @@ func TestPaymentCreatedEventProcessing(t *testing.T) {
 func InitializeProcessWithdrawalCreatedScenario(ctx *godog.ScenarioContext) {
     ctx.Before(beforeScenarioHook)
     ctx.Given(`^a running dinopay-gateway$`, aRunningDinopayGateway)
-    ctx.Given(`^a payment created event:$`, aWithdrawalCreatedEvent)
+    ctx.Given(`^a PaymentCreated event:$`, aPaymentCreatedEvent)
     ctx.Given(`^a dinopay endpoint to create payments:$`, aDinopayEndpointToCreatePayments)
-    ctx.Given(`^a payments endpoint to update withdrawals:$`, aPaymentsEndpointToUpdateWithdrawals)
+    ctx.Given(`^a payments endpoint to update payments:$`, aPaymentsEndpointToUpdatePayments)
     ctx.When(`^the event is published$`, theEventIsPublished)
     ctx.Then(`^the dinopay-gateway creates the corresponding payment on the DinoPay API$`, theDinopayGatewayCreatesTheCorrespondingPaymentOnTheDinoPayAPI)
-    ctx.Then(`^the dinopay-gateway updates the withdrawal on payments service$`, theDinopayGatewayUpdatesTheWithdrawalOnPaymentsService)
+    ctx.Then(`^the dinopay-gateway updates the payment on payments service$`, theDinopayGatewayUpdatesThePaymentOnPaymentsService)
     ctx.Then(`the dinopay-gateway fails creating the corresponding payment on the DinoPay API$`, theDinoPayGatewayFailsCreatingTheCorrespondingPayment)
     ctx.Then(`^the dinopay-gateway produces the following log:$`, theDinopayGatewayProducesTheFollowingLog)
     ctx.After(afterScenarioHook)
 }
 
-func aWithdrawalCreatedEvent(ctx context.Context, event *godog.DocString) (context.Context, error) {
+func aPaymentCreatedEvent(ctx context.Context, event *godog.DocString) (context.Context, error) {
     if event == nil || len(event.Content) == 0 {
         return ctx, fmt.Errorf("the WithdrawalCreated event is empty or was not defined")
     }
@@ -59,7 +59,7 @@ func aDinopayEndpointToCreatePayments(ctx context.Context, mockserverExpectation
     return createMockServerExpectation(ctx, mockserverExpectation, dinoPayEndpointCreatePaymentsExpectationIdKey)
 }
 
-func aPaymentsEndpointToUpdateWithdrawals(ctx context.Context, mockserverExpectation *godog.DocString) (context.Context, error) {
+func aPaymentsEndpointToUpdatePayments(ctx context.Context, mockserverExpectation *godog.DocString) (context.Context, error) {
     return createMockServerExpectation(ctx, mockserverExpectation, paymentsEndpointUpdateWithdrawalExpectationIdKey)
 }
 
@@ -87,7 +87,7 @@ func theDinopayGatewayCreatesTheCorrespondingPaymentOnTheDinoPayAPI(ctx context.
     return ctx, err
 }
 
-func theDinopayGatewayUpdatesTheWithdrawalOnPaymentsService(ctx context.Context) (context.Context, error) {
+func theDinopayGatewayUpdatesThePaymentOnPaymentsService(ctx context.Context) (context.Context, error) {
     id := expectationIdFromCtx(ctx, paymentsEndpointUpdateWithdrawalExpectationIdKey)
     err := verifyExpectationMetWithin(ctx, id, expectationTimeout)
     return ctx, err
