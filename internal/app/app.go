@@ -106,6 +106,8 @@ func (app *App) Run(ctx context.Context) error {
     appLogger.Info("dinopay-gateway started")
     <-ctx.Done()
 
+    // TODO stop processors gracefully
+
     appLogger.Info("dinopay-gateway stopped")
     return nil
 }
