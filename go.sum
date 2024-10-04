@@ -2573,8 +2573,6 @@ github.com/walletera/message-processor v0.0.7 h1:HOOchYjcNhTeIniWEq/I6O+UbPuNQ73
 github.com/walletera/message-processor v0.0.7/go.mod h1:HmauPgxrGzn7NvOn1dXts7dyL2BsVTD9RUAkrQqApMk=
 github.com/walletera/mockserver-go-client v0.0.1 h1:w5KEuwWxehfvN4Ooai5AgecmtxreKUHZRETAf5/jUSQ=
 github.com/walletera/mockserver-go-client v0.0.1/go.mod h1:2IFxURJRzsHqT+1fxNO1RlUuUTqEj29d5kME8dVF2og=
-github.com/walletera/payments v0.0.3 h1:A/LTre8MBLM3nljW5fyvUMrGCmu8cStRBw3Yku/fwP8=
-github.com/walletera/payments v0.0.3/go.mod h1:wIOvJGmLAnVr74iGP2Jk+Y+xZuTo/zgYE1kU6JQeejo=
 github.com/walletera/payments-types v0.0.2 h1:Df28EC0Ky5RG+MGdsC1xKDPcyp2Q3FiX22fkUetwg6E=
 github.com/walletera/payments-types v0.0.2/go.mod h1:OH/q/5x3dU1qPksdtH/FYtGFxBOhml17wJFpfUD4k+A=
 github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=

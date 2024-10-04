@@ -13,7 +13,6 @@ require (
 	github.com/walletera/logs-watcher v0.0.3
 	github.com/walletera/message-processor v0.0.7
 	github.com/walletera/mockserver-go-client v0.0.1
-	github.com/walletera/payments v0.0.3
 	github.com/walletera/payments-types v0.0.2
 	go.uber.org/zap v1.27.0
 	go.uber.org/zap/exp v0.2.0
