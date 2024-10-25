@@ -15,7 +15,7 @@ func NewEventsDeserializer() *EventsDeserializer {
     return &EventsDeserializer{}
 }
 
-func (d *EventsDeserializer) Deserialize(rawPayload []byte) (events.Event[EventsVisitor], error) {
+func (d *EventsDeserializer) Deserialize(rawPayload []byte) (events.Event[EventsHandler], error) {
     var event events.EventEnvelope
     err := json.Unmarshal(rawPayload, &event)
     if err != nil {

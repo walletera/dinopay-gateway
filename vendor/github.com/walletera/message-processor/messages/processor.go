@@ -9,32 +9,32 @@ import (
     "github.com/walletera/message-processor/events"
 )
 
-type Processor[Visitor any] struct {
+type Processor[Handler any] struct {
     messageConsumer    Consumer
-    eventsDeserializer events.Deserializer[Visitor]
-    eventsVisitor      Visitor
+    eventsDeserializer events.Deserializer[Handler]
+    eventsHandler      Handler
     opts               ProcessorOpts
 }
 
-func NewProcessor[Visitor any](
+func NewProcessor[Handler any](
     messageConsumer Consumer,
-    eventsDeserializer events.Deserializer[Visitor],
-    eventsVisitor Visitor,
+    eventsDeserializer events.Deserializer[Handler],
+    eventsHandler Handler,
     customOpts ...ProcessorOpt,
-) *Processor[Visitor] {
+) *Processor[Handler] {
 
     opts := defaultProcessorOpts
     applyCustomOpts(&opts, customOpts)
 
-    return &Processor[Visitor]{
+    return &Processor[Handler]{
         messageConsumer:    messageConsumer,
         eventsDeserializer: eventsDeserializer,
-        eventsVisitor:      eventsVisitor,
+        eventsHandler:      eventsHandler,
         opts:               opts,
     }
 }
 
-func (p *Processor[Visitor]) Start(ctx context.Context) error {
+func (p *Processor[Handler]) Start(ctx context.Context) error {
     msgCh, err := p.startMessageConsumer(ctx)
     if err != nil {
         return err
@@ -43,7 +43,7 @@ func (p *Processor[Visitor]) Start(ctx context.Context) error {
     return nil
 }
 
-func (p *Processor[Visitor]) startMessageConsumer(ctx context.Context) (<-chan Message, error) {
+func (p *Processor[Handler]) startMessageConsumer(ctx context.Context) (<-chan Message, error) {
     msgCh, err := p.messageConsumer.Consume()
     if err != nil {
         return nil, fmt.Errorf("failed consuming from message consumer: %w", err)
@@ -58,13 +58,13 @@ func (p *Processor[Visitor]) startMessageConsumer(ctx context.Context) (<-chan M
     return msgCh, nil
 }
 
-func (p *Processor[Visitor]) processMsgs(ctx context.Context, ch <-chan Message) {
+func (p *Processor[Handler]) processMsgs(ctx context.Context, ch <-chan Message) {
     for msg := range ch {
         go p.processMsgWithTimeout(ctx, msg)
     }
 }
 
-func (p *Processor[Visitor]) processMsgWithTimeout(ctx context.Context, msg Message) {
+func (p *Processor[Handler]) processMsgWithTimeout(ctx context.Context, msg Message) {
     ctxWithTimeout, cancelCtx := context.WithTimeout(ctx, p.opts.processingTimeout)
     defer cancelCtx()
     processMsgDone := make(chan any)
@@ -84,7 +84,7 @@ func (p *Processor[Visitor]) processMsgWithTimeout(ctx context.Context, msg Mess
     }
 }
 
-func (p *Processor[Visitor]) processMsg(ctx context.Context, message Message) {
+func (p *Processor[Handler]) processMsg(ctx context.Context, message Message) {
     event, err := p.eventsDeserializer.Deserialize(message.Payload())
     if err != nil {
         p.handleError(message, procerrors.NewUnprocessableMessageError(err.Error()))
@@ -93,7 +93,7 @@ func (p *Processor[Visitor]) processMsg(ctx context.Context, message Message) {
     if event == nil {
         return
     }
-    processingErr := event.Accept(ctx, p.eventsVisitor)
+    processingErr := event.Accept(ctx, p.eventsHandler)
     if processingErr != nil {
         p.handleError(message, processingErr)
     } else {
@@ -101,7 +101,7 @@ func (p *Processor[Visitor]) processMsg(ctx context.Context, message Message) {
     }
 }
 
-func (p *Processor[Visitor]) handleError(message Message, err procerrors.ProcessingError) {
+func (p *Processor[Handler]) handleError(message Message, err procerrors.ProcessingError) {
     if p.opts.errorCallback != nil {
         p.opts.errorCallback(err)
     }

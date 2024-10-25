@@ -5,11 +5,16 @@ import (
     "fmt"
 
     amqp "github.com/rabbitmq/amqp091-go"
+    "github.com/walletera/message-processor/events"
     "github.com/walletera/message-processor/messages"
 )
 
 const (
-    DefaultPort      = 5672
+    DefaultHost     = "localhost"
+    DefaultPort     = 5672
+    DefaultUser     = "guest"
+    DefaultPassword = "guest"
+
     ManagementUIPort = 15672
 
     ExchangeTypeDirect = "direct"
@@ -22,7 +27,11 @@ type Client struct {
     connChannel *amqp.Channel
     queue       amqp.Queue
 
-    port                uint
+    host     string
+    port     uint
+    user     string
+    password string
+
     useDefaultExchange  bool
     exchangeName        string
     exchangeType        string
@@ -91,16 +100,20 @@ func (r *Client) Consume() (<-chan messages.Message, error) {
     return messagesCh, nil
 }
 
-func (r *Client) Publish(ctx context.Context, message []byte, routingKey string) error {
+func (r *Client) Publish(ctx context.Context, eventData events.EventData, topic string) error {
+    serializedEvent, err := eventData.Serialize()
+    if err != nil {
+        return fmt.Errorf("error serializing event: %w", err)
+    }
 
-    err := r.connChannel.PublishWithContext(ctx,
+    err = r.connChannel.PublishWithContext(ctx,
         r.exchangeName, // exchange
-        routingKey,     // routing key
+        topic,          // routing key
         false,          // mandatory
         false,          // immediate
         amqp.Publishing{
             ContentType: "text/plain",
-            Body:        message,
+            Body:        serializedEvent,
         })
     if err != nil {
         return err
@@ -126,7 +139,7 @@ func (r *Client) QueueName() string {
 }
 
 func (r *Client) init() error {
-    conn, err := amqp.Dial(fmt.Sprintf("amqp://guest:guest@localhost:%d/", r.port))
+    conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", r.user, r.password, r.host, r.port))
     if err != nil {
         return fmt.Errorf("failed to connect to RabbitMQ: %w", err)
     }
@@ -173,7 +186,10 @@ func (r *Client) init() error {
 }
 
 func applyOptionsOrDefault(consumer *Client, opts []ConsumerOpt) error {
+    consumer.host = DefaultHost
     consumer.port = DefaultPort
+    consumer.user = DefaultUser
+    consumer.password = DefaultPassword
     consumer.useDefaultExchange = true
     for _, opt := range opts {
         opt(consumer)
@@ -186,9 +202,27 @@ func applyOptionsOrDefault(consumer *Client, opts []ConsumerOpt) error {
     return nil
 }
 
+func WithHost(host string) func(c *Client) {
+    return func(c *Client) {
+        c.host = host
+    }
+}
+
 func WithPort(port uint) func(c *Client) {
     return func(c *Client) {
         c.port = port
+    }
+}
+
+func WithUser(user string) func(c *Client) {
+    return func(c *Client) {
+        c.user = user
+    }
+}
+
+func WithPassword(password string) func(c *Client) {
+    return func(c *Client) {
+        c.password = password
     }
 }
 

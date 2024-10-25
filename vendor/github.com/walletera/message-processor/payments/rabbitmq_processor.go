@@ -19,10 +19,10 @@ type RabbitMQProcessorOpt struct {
 }
 
 func NewRabbitMQProcessor(
-    eventsVisitor EventsVisitor,
+    eventsHandler EventsHandler,
     queueName string,
     opts ...RabbitMQProcessorOpt,
-) (*messages.Processor[EventsVisitor], error) {
+) (*messages.Processor[EventsHandler], error) {
     defaultConsumerOpts := []rabbitmq.ConsumerOpt{
         rabbitmq.WithExchangeName(RabbitMQExchangeName),
         rabbitmq.WithExchangeType(RabbitMQExchangeType),
@@ -34,7 +34,7 @@ func NewRabbitMQProcessor(
     if err != nil {
         return nil, fmt.Errorf("creating rabbitmq client: %w", err)
     }
-    return NewProcessor(rabbitMQClient, eventsVisitor, processorOpts(opts)...), nil
+    return NewProcessor(rabbitMQClient, eventsHandler, processorOpts(opts)...), nil
 }
 
 func rabbitmqConsumerOpts(opts []RabbitMQProcessorOpt) []rabbitmq.ConsumerOpt {

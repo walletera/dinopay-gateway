@@ -9,7 +9,7 @@ import (
     "github.com/walletera/message-processor/events"
 )
 
-var _ events.Event[EventsVisitor] = WithdrawalCreatedEvent{}
+var _ events.Event[EventsHandler] = WithdrawalCreatedEvent{}
 
 type WithdrawalCreatedEvent struct {
     Id          string                `json:"id"`
@@ -36,8 +36,8 @@ type BeneficiaryAccount struct {
     RoutingKey string `json:"routing_key"`
 }
 
-func (w WithdrawalCreatedEvent) Accept(ctx context.Context, visitor EventsVisitor) errors.ProcessingError {
-    return visitor.VisitWithdrawalCreated(ctx, w)
+func (w WithdrawalCreatedEvent) Accept(ctx context.Context, handler EventsHandler) errors.ProcessingError {
+    return handler.HandleWithdrawalCreated(ctx, w)
 }
 
 func (w WithdrawalCreatedEvent) ID() string {
