@@ -73,7 +73,7 @@ func theEventIsPublished(ctx context.Context) (context.Context, error) {
     }
 
     rawEvent := ctx.Value(rawWithdrawalCreatedEventKey).([]byte)
-    err = publisher.Publish(ctx, rawEvent, payments.RabbitMQRoutingKey)
+    err = publisher.Publish(ctx, publishable{rawEvent: rawEvent}, payments.RabbitMQRoutingKey)
     if err != nil {
         return nil, fmt.Errorf("error publishing WithdrawalCreated event to rabbitmq: %s", err.Error())
     }

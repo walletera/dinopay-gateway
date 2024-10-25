@@ -2,6 +2,8 @@ package eventstoredb
 
 import (
     "context"
+    "errors"
+    "fmt"
 
     "github.com/EventStore/EventStore-Client-Go/v4/esdb"
 )
@@ -30,7 +32,11 @@ func CreatePersistentSubscription(connectionString string, streamName string, gr
         },
     )
     if err != nil {
-        println("CreatePersistentSubscription failed: " + err.Error())
+        var esdbError *esdb.Error
+        ok := errors.As(err, &esdbError)
+        if !ok || !esdbError.IsErrorCode(esdb.ErrorCodeResourceAlreadyExists) {
+            return fmt.Errorf("failed creating persistent subscription for stream %s and group %s: %w", streamName, groupName, err)
+        }
     }
 
     return nil

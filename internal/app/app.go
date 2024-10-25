@@ -37,11 +37,15 @@ const (
 )
 
 type App struct {
-    rabbitmqUrl string
-    dinopayUrl  string
-    paymentsUrl string
-    esdbUrl     string
-    logHandler  slog.Handler
+    rabbitmqHost     string
+    rabbitmqPort     int
+    rabbitmqUser     string
+    rabbitmqPassword string
+    dinopayUrl       string
+    paymentsUrl      string
+    esdbUrl          string
+    logHandler       slog.Handler
+    logger           *slog.Logger
 }
 
 func NewApp(opts ...Option) (*App, error) {
@@ -57,9 +61,17 @@ func NewApp(opts ...Option) (*App, error) {
 }
 
 func (app *App) Run(ctx context.Context) error {
+
+    // TODO log initialization to main
     appLogger := slog.
         New(app.logHandler).
         With(logattr.ServiceName("dinopay-gateway"))
+    app.logger = appLogger
+
+    err := app.execESDBSetupTasks(ctx)
+    if err != nil {
+        return err
+    }
 
     paymentsMessageProcessor, err := createPaymentsMessageProcessor(app, appLogger)
     if err != nil {
@@ -108,12 +120,31 @@ func (app *App) Run(ctx context.Context) error {
     appLogger.Info("gateway message processor started")
 
     appLogger.Info("dinopay-gateway started")
-    <-ctx.Done()
 
-    // TODO stop processors gracefully
-
-    appLogger.Info("dinopay-gateway stopped")
     return nil
+}
+
+func (app *App) execESDBSetupTasks(ctx context.Context) error {
+    err := esdbpkg.EnableByCategoryProjection(ctx, app.esdbUrl)
+    if err != nil {
+        return fmt.Errorf("failed enabling esdb by category projection: %w", err)
+    }
+
+    err = esdbpkg.CreatePersistentSubscription(app.esdbUrl, ESDB_ByCategoryProjection_OutboundPayment, ESDB_SubscriptionGroupName)
+    if err != nil {
+        return fmt.Errorf("failed creating persistent subscription for %s: %w", ESDB_ByCategoryProjection_OutboundPayment, err)
+    }
+
+    err = esdbpkg.CreatePersistentSubscription(app.esdbUrl, ESDB_ByCategoryProjection_InboundPayment, ESDB_SubscriptionGroupName)
+    if err != nil {
+        return fmt.Errorf("failed creating persistent subscription for %s: %w", ESDB_ByCategoryProjection_InboundPayment, err)
+    }
+    return nil
+}
+
+func (app *App) Stop(ctx context.Context) {
+    // TODO implement processor gracefull shutdown
+    app.logger.Info("dinopay-gateway stopped")
 }
 
 func setDefaultOpts(app *App) error {

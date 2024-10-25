@@ -3,14 +3,12 @@ package tests
 import (
     "context"
     "encoding/json"
-    "errors"
     "fmt"
     "log/slog"
     "net/http"
     "net/url"
     "time"
 
-    "github.com/EventStore/EventStore-Client-Go/v4/esdb"
     "github.com/cucumber/godog"
     "github.com/walletera/dinopay-gateway/internal/app"
     "github.com/walletera/dinopay-gateway/pkg/eventstoredb"
@@ -25,6 +23,7 @@ import (
 const (
     mockserverUrl             = "http://localhost:2090"
     eventStoreDBUrl           = "esdb://localhost:2113?tls=false"
+    appKey                    = "app"
     appCtxCancelFuncKey       = "appCtxCancelFuncKey"
     logsWatcherKey            = "logsWatcher"
     logsWatcherWaitForTimeout = 5 * time.Second
@@ -54,6 +53,7 @@ func afterScenarioHook(ctx context.Context, _ *godog.Scenario, err error) (conte
     logsWatcher := logsWatcherFromCtx(ctx)
 
     appCtxCancelFuncFromCtx(ctx)()
+    appFromCtx(ctx).Stop(ctx)
     foundLogEntry := logsWatcher.WaitFor("dinopay-gateway stopped", logsWatcherWaitForTimeout)
     if !foundLogEntry {
         return ctx, fmt.Errorf("app termination failed (didn't find expected log entry)")
@@ -87,22 +87,22 @@ func aRunningDinopayGateway(ctx context.Context) (context.Context, error) {
     logHandler := logsWatcherFromCtx(ctx).DecoratedHandler()
 
     appCtx, appCtxCancelFunc := context.WithCancel(ctx)
-    go func() {
-        app, err := app.NewApp(
-            app.WithDinopayUrl(mockserverUrl),
-            app.WithPaymentsUrl(mockserverUrl),
-            app.WithESDBUrl(eventStoreDBUrl),
-            app.WithLogHandler(logHandler),
-        )
-        if err != nil {
-            panic("failed initializing app: " + err.Error())
-        }
-        err = app.Run(appCtx)
-        if err != nil {
-            panic("failed running app" + err.Error())
-        }
-    }()
+    app, err := app.NewApp(
+        app.WithDinopayUrl(mockserverUrl),
+        app.WithPaymentsUrl(mockserverUrl),
+        app.WithESDBUrl(eventStoreDBUrl),
+        app.WithLogHandler(logHandler),
+    )
+    if err != nil {
+        panic("failed initializing app: " + err.Error())
+    }
 
+    err = app.Run(appCtx)
+    if err != nil {
+        panic("failed running app" + err.Error())
+    }
+
+    ctx = context.WithValue(ctx, appKey, app)
     ctx = context.WithValue(ctx, appCtxCancelFuncKey, appCtxCancelFunc)
 
     foundLogEntry := logsWatcherFromCtx(ctx).WaitFor("dinopay-gateway started", logsWatcherWaitForTimeout)
@@ -114,49 +114,17 @@ func aRunningDinopayGateway(ctx context.Context) (context.Context, error) {
 }
 
 func esdbByCategoryProjectionEnabled(ctx context.Context) (context.Context, error) {
-    req, err := http.NewRequestWithContext(
-        ctx,
-        http.MethodPost,
-        fmt.Sprintf("http://127.0.0.1:%s/projection/$by_category/command/enable", eventStoreDBPort),
-        nil,
-    )
+    err := eventstoredb.EnableByCategoryProjection(ctx, eventStoreDBUrl)
     if err != nil {
-        return ctx, fmt.Errorf("failed creating request for enabling $by_category projection: %w", err)
-    }
-    req.Header.Add("Accept", "application/json")
-    req.Header.Add("Content-Length", "0")
-    _, err = http.DefaultClient.Do(req)
-    if err != nil {
-        return ctx, fmt.Errorf("failed enabling $by_category projection: %w", err)
+        return ctx, err
     }
     return ctx, nil
 }
 
 func anEventstoreDBPersistentSubscriptionForCategory(ctx context.Context, categoryName string) (context.Context, error) {
-    subscriptionSettings := esdb.SubscriptionSettingsDefault()
-    subscriptionSettings.ResolveLinkTos = true
-    subscriptionSettings.MaxRetryCount = 3
-
-    esdbClient, err := eventstoredb.GetESDBClient(eventStoreDBUrl)
+    err := eventstoredb.CreatePersistentSubscription(eventStoreDBUrl, categoryName, app.ESDB_SubscriptionGroupName)
     if err != nil {
         return ctx, err
-    }
-
-    err = esdbClient.CreatePersistentSubscription(
-        context.Background(),
-        categoryName,
-        app.ESDB_SubscriptionGroupName,
-        esdb.PersistentStreamSubscriptionOptions{
-            Settings: &subscriptionSettings,
-        },
-    )
-    // FIXME: delete persistent subscription on the After hook
-    if err != nil {
-        var esdbError *esdb.Error
-        ok := errors.As(err, &esdbError)
-        if !ok || !esdbError.IsErrorCode(esdb.ErrorCodeResourceAlreadyExists) {
-            return ctx, fmt.Errorf("CreatePersistentSubscription failed: %w", err)
-        }
     }
 
     return ctx, nil
@@ -213,6 +181,10 @@ func expectationIdFromCtx(ctx context.Context, ctxKey string) string {
 
 func logsWatcherFromCtx(ctx context.Context) *slogwatcher.Watcher {
     return ctx.Value(logsWatcherKey).(*slogwatcher.Watcher)
+}
+
+func appFromCtx(ctx context.Context) *app.App {
+    return ctx.Value(appKey).(*app.App)
 }
 
 func verifyExpectationMetWithin(ctx context.Context, expectationID string, timeout time.Duration) error {
