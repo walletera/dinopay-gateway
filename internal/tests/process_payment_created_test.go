@@ -7,6 +7,8 @@ import (
     "time"
 
     "github.com/cucumber/godog"
+    "github.com/walletera/dinopay-gateway/internal/app"
+    "github.com/walletera/message-processor/events"
     "github.com/walletera/message-processor/payments"
     "github.com/walletera/message-processor/rabbitmq"
 )
@@ -73,7 +75,10 @@ func theEventIsPublished(ctx context.Context) (context.Context, error) {
     }
 
     rawEvent := ctx.Value(rawWithdrawalCreatedEventKey).([]byte)
-    err = publisher.Publish(ctx, publishable{rawEvent: rawEvent}, payments.RabbitMQRoutingKey)
+    err = publisher.Publish(ctx, publishable{rawEvent: rawEvent}, events.RoutingInfo{
+        Topic:      app.RabbitMQPaymentsExchangeName,
+        RoutingKey: app.RabbitMQPaymentCreatedRoutingKey,
+    })
     if err != nil {
         return nil, fmt.Errorf("error publishing WithdrawalCreated event to rabbitmq: %s", err.Error())
     }

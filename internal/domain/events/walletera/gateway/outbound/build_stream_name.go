@@ -8,9 +8,9 @@ const (
 )
 
 func BuildOutboundPaymentStreamName(id string) string {
-    return fmt.Sprintf("%s-%s", OutboundPaymentStreamNamePrefix, id)
+    return fmt.Sprintf("%s.%s", OutboundPaymentStreamNamePrefix, id)
 }
 
 func BuildInboundPaymentStreamName(id string) string {
-    return fmt.Sprintf("%s-%s", InboundPaymentStreamNamePrefix, id)
+    return fmt.Sprintf("%s.%s", InboundPaymentStreamNamePrefix, id)
 }

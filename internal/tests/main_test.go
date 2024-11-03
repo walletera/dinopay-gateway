@@ -10,6 +10,7 @@ import (
 
     "github.com/testcontainers/testcontainers-go"
     "github.com/testcontainers/testcontainers-go/wait"
+    "github.com/walletera/message-processor/eventstoredb"
     "github.com/walletera/message-processor/rabbitmq"
 )
 
@@ -26,6 +27,16 @@ func TestMain(m *testing.M) {
     terminateEventSToreDBContainer, err := startEventStoreDBContainer(ctx)
     if err != nil {
         panic("error starting esdb container: " + err.Error())
+    }
+
+    err = eventstoredb.EnableByCategoryProjection(ctx, eventStoreDBUrl)
+    if err != nil {
+        panic("failed enabling esdb by category projection: " + err.Error())
+    }
+
+    err = eventstoredb.SetESDBByCategoryProjectionSeparator(ctx, eventStoreDBUrl)
+    if err != nil {
+        panic("failed setting esdb by category projection separator: " + err.Error())
     }
 
     terminateRabbitMQContainer, err := startRabbitMQContainer(ctx)

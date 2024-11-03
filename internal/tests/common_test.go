@@ -11,8 +11,9 @@ import (
 
     "github.com/cucumber/godog"
     "github.com/walletera/dinopay-gateway/internal/app"
-    "github.com/walletera/dinopay-gateway/pkg/eventstoredb"
     slogwatcher "github.com/walletera/logs-watcher/slog"
+    "github.com/walletera/message-processor/eventstoredb"
+    "github.com/walletera/message-processor/rabbitmq"
     msClient "github.com/walletera/mockserver-go-client/pkg/client"
     "go.uber.org/zap"
     "go.uber.org/zap/exp/zapslog"
@@ -88,6 +89,10 @@ func aRunningDinopayGateway(ctx context.Context) (context.Context, error) {
 
     appCtx, appCtxCancelFunc := context.WithCancel(ctx)
     app, err := app.NewApp(
+        app.WithRabbitmqHost(rabbitmq.DefaultHost),
+        app.WithRabbitmqPort(rabbitmq.DefaultPort),
+        app.WithRabbitmqUser(rabbitmq.DefaultUser),
+        app.WithRabbitmqPassword(rabbitmq.DefaultPassword),
         app.WithDinopayUrl(mockserverUrl),
         app.WithPaymentsUrl(mockserverUrl),
         app.WithESDBUrl(eventStoreDBUrl),

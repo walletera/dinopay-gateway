@@ -15,6 +15,7 @@ import (
     esdbpkg "github.com/walletera/dinopay-gateway/pkg/eventstoredb"
     "github.com/walletera/dinopay-gateway/pkg/logattr"
     "github.com/walletera/message-processor/errors"
+    "github.com/walletera/message-processor/eventstoredb"
     "github.com/walletera/message-processor/messages"
     "github.com/walletera/message-processor/rabbitmq"
     "github.com/walletera/message-processor/webhook"
@@ -26,9 +27,9 @@ import (
 )
 
 const (
-    RabbitMQExchangeName                      = "payments"
+    RabbitMQPaymentsExchangeName              = "payments.events"
     RabbitMQExchangeType                      = "topic"
-    RabbitMQRoutingKey                        = "payments.events"
+    RabbitMQPaymentCreatedRoutingKey          = "payment.created"
     RabbitMQQueueName                         = "dinopay-gateway"
     ESDB_ByCategoryProjection_OutboundPayment = "$ce-outboundPayment"
     ESDB_ByCategoryProjection_InboundPayment  = "$ce-inboundPayment"
@@ -124,24 +125,6 @@ func (app *App) Run(ctx context.Context) error {
     return nil
 }
 
-func (app *App) execESDBSetupTasks(ctx context.Context) error {
-    err := esdbpkg.EnableByCategoryProjection(ctx, app.esdbUrl)
-    if err != nil {
-        return fmt.Errorf("failed enabling esdb by category projection: %w", err)
-    }
-
-    err = esdbpkg.CreatePersistentSubscription(app.esdbUrl, ESDB_ByCategoryProjection_OutboundPayment, ESDB_SubscriptionGroupName)
-    if err != nil {
-        return fmt.Errorf("failed creating persistent subscription for %s: %w", ESDB_ByCategoryProjection_OutboundPayment, err)
-    }
-
-    err = esdbpkg.CreatePersistentSubscription(app.esdbUrl, ESDB_ByCategoryProjection_InboundPayment, ESDB_SubscriptionGroupName)
-    if err != nil {
-        return fmt.Errorf("failed creating persistent subscription for %s: %w", ESDB_ByCategoryProjection_InboundPayment, err)
-    }
-    return nil
-}
-
 func (app *App) Stop(ctx context.Context) {
     // TODO implement processor gracefull shutdown
     app.logger.Info("dinopay-gateway stopped")
@@ -174,6 +157,19 @@ func newZapLogger() (*zap.Logger, error) {
     return zapConfig.Build()
 }
 
+func (app *App) execESDBSetupTasks(_ context.Context) error {
+    err := eventstoredb.CreatePersistentSubscription(app.esdbUrl, ESDB_ByCategoryProjection_OutboundPayment, ESDB_SubscriptionGroupName)
+    if err != nil {
+        return fmt.Errorf("failed creating persistent subscription for %s: %w", ESDB_ByCategoryProjection_OutboundPayment, err)
+    }
+
+    err = eventstoredb.CreatePersistentSubscription(app.esdbUrl, ESDB_ByCategoryProjection_InboundPayment, ESDB_SubscriptionGroupName)
+    if err != nil {
+        return fmt.Errorf("failed creating persistent subscription for %s: %w", ESDB_ByCategoryProjection_InboundPayment, err)
+    }
+    return nil
+}
+
 func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[paymentsevents.Handler], error) {
     dinopayClient, err := dinopay.NewClient(app.dinopayUrl)
     if err != nil {
@@ -190,9 +186,13 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
     queueName := fmt.Sprintf(RabbitMQQueueName)
 
     rabbitMQClient, err := rabbitmq.NewClient(
-        rabbitmq.WithExchangeName(RabbitMQExchangeName),
+        rabbitmq.WithHost(app.rabbitmqHost),
+        rabbitmq.WithPort(uint(app.rabbitmqPort)),
+        rabbitmq.WithUser(app.rabbitmqUser),
+        rabbitmq.WithPassword(app.rabbitmqPassword),
+        rabbitmq.WithExchangeName(RabbitMQPaymentsExchangeName),
         rabbitmq.WithExchangeType(RabbitMQExchangeType),
-        rabbitmq.WithConsumerRoutingKeys(RabbitMQRoutingKey),
+        rabbitmq.WithConsumerRoutingKeys(RabbitMQPaymentCreatedRoutingKey),
         rabbitmq.WithQueueName(queueName),
     )
     if err != nil {
