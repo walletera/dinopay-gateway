@@ -277,6 +277,8 @@ github.com/walletera/logs-watcher/slog
 ## explicit; go 1.21
 github.com/walletera/message-processor/errors
 github.com/walletera/message-processor/events
+github.com/walletera/message-processor/eventsourcing
+github.com/walletera/message-processor/eventstoredb
 github.com/walletera/message-processor/messages
 github.com/walletera/message-processor/payments
 github.com/walletera/message-processor/rabbitmq

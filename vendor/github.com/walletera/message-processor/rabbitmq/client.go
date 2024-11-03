@@ -100,17 +100,18 @@ func (r *Client) Consume() (<-chan messages.Message, error) {
     return messagesCh, nil
 }
 
-func (r *Client) Publish(ctx context.Context, eventData events.EventData, topic string) error {
+// TODO Move out of the client to a dedicated Publisher
+func (r *Client) Publish(ctx context.Context, eventData events.EventData, routingInfo events.RoutingInfo) error {
     serializedEvent, err := eventData.Serialize()
     if err != nil {
         return fmt.Errorf("error serializing event: %w", err)
     }
 
     err = r.connChannel.PublishWithContext(ctx,
-        r.exchangeName, // exchange
-        topic,          // routing key
-        false,          // mandatory
-        false,          // immediate
+        routingInfo.Topic,      // exchange
+        routingInfo.RoutingKey, // routing key
+        false,                  // mandatory
+        false,                  // immediate
         amqp.Publishing{
             ContentType: "text/plain",
             Body:        serializedEvent,
