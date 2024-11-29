@@ -12,7 +12,6 @@ import (
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway/inbound"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway/outbound"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/payments"
-    esdbpkg "github.com/walletera/dinopay-gateway/pkg/eventstoredb"
     "github.com/walletera/dinopay-gateway/pkg/logattr"
     "github.com/walletera/message-processor/errors"
     "github.com/walletera/message-processor/eventstoredb"
@@ -176,7 +175,7 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
         return nil, fmt.Errorf("failed parsing dinopay url %s: %w", app.dinopayUrl, err)
     }
 
-    esdbClient, err := esdbpkg.GetESDBClient(app.esdbUrl)
+    esdbClient, err := eventstoredb.GetESDBClient(app.esdbUrl)
     if err != nil {
         return nil, fmt.Errorf("failed getting esdb client: %w", err)
     }
@@ -221,7 +220,7 @@ func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
     }
     webhookConsumer := webhook.NewServer(WebhookServerPort, webhook.WithLogger(logger.With(logattr.Component("webhook.Server"))))
-    esdbClient, err := esdbpkg.GetESDBClient(app.esdbUrl)
+    esdbClient, err := eventstoredb.GetESDBClient(app.esdbUrl)
     if err != nil {
         return nil, fmt.Errorf("failed getting esdb client: %w", err)
     }
@@ -246,7 +245,7 @@ func createGatewayInboundMessageProcessor(app *App, logger *slog.Logger) (*messa
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
     }
 
-    esdbMessagesConsumer, err := esdbpkg.NewMessagesConsumer(
+    esdbMessagesConsumer, err := eventstoredb.NewMessagesConsumer(
         app.esdbUrl,
         ESDB_ByCategoryProjection_InboundPayment,
         ESDB_SubscriptionGroupName,
@@ -275,7 +274,7 @@ func createGatewayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
     }
 
-    esdbMessagesConsumer, err := esdbpkg.NewMessagesConsumer(
+    esdbMessagesConsumer, err := eventstoredb.NewMessagesConsumer(
         app.esdbUrl,
         ESDB_ByCategoryProjection_OutboundPayment,
         ESDB_SubscriptionGroupName,
@@ -284,7 +283,7 @@ func createGatewayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
         return nil, fmt.Errorf("failed creating esdb messages consumer: %w", err)
     }
 
-    esdbClient, err := esdbpkg.GetESDBClient(app.esdbUrl)
+    esdbClient, err := eventstoredb.GetESDBClient(app.esdbUrl)
     if err != nil {
         return nil, fmt.Errorf("failed creating esdb client: %w", err)
     }

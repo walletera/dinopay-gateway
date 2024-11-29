@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// GetPayment implements getPayment operation.
+//
+// Gets an individual payment.
+//
+// GET /payments/{paymentId}
+func (UnimplementedHandler) GetPayment(ctx context.Context, params GetPaymentParams) (r GetPaymentRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // PatchPayment implements patchPayment operation.
 //
 // Patches an outbound payment.

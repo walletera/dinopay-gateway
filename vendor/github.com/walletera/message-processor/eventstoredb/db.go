@@ -43,9 +43,9 @@ func (db *DB) AppendEvents(ctx context.Context, streamName string, events ...eve
 
 func (db *DB) ReadEvents(ctx context.Context, streamName string) ([]eventsourcing.RawEvent, error) {
     stream, err := db.client.ReadStream(ctx, streamName, esdb.ReadStreamOptions{
-        Direction: esdb.Backwards,
-        From:      esdb.End{},
-    }, 10)
+        Direction: esdb.Forwards,
+        From:      esdb.Start{},
+    }, 100)
 
     if err != nil {
         return nil, err

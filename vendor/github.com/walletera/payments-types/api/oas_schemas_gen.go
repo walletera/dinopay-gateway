@@ -84,6 +84,11 @@ type ErrorMessage string
 
 func (*ErrorMessage) postPaymentRes() {}
 
+// GetPaymentNotFound is response for GetPayment operation.
+type GetPaymentNotFound struct{}
+
+func (*GetPaymentNotFound) getPaymentRes() {}
+
 // NewOptAccountDetails returns new OptAccountDetails with value set to v.
 func NewOptAccountDetails(v AccountDetails) OptAccountDetails {
 	return OptAccountDetails{
@@ -496,7 +501,9 @@ func (s *Payment) SetUpdatedAt(val OptDateTime) {
 	s.UpdatedAt = val
 }
 
+func (*Payment) getPaymentRes()   {}
 func (*Payment) patchPaymentRes() {}
+func (*Payment) postPaymentRes()  {}
 
 type PaymentDirection string
 
@@ -635,11 +642,6 @@ func (s *PaymentUpdate) SetExternalId(val OptUUID) {
 func (s *PaymentUpdate) SetStatus(val PaymentStatus) {
 	s.Status = val
 }
-
-// PostPaymentCreated is response for PostPayment operation.
-type PostPaymentCreated struct{}
-
-func (*PostPaymentCreated) postPaymentRes() {}
 
 // PostPaymentInternalServerError is response for PostPayment operation.
 type PostPaymentInternalServerError struct{}

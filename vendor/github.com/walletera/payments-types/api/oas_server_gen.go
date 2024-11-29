@@ -8,6 +8,12 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// GetPayment implements getPayment operation.
+	//
+	// Gets an individual payment.
+	//
+	// GET /payments/{paymentId}
+	GetPayment(ctx context.Context, params GetPaymentParams) (GetPaymentRes, error)
 	// PatchPayment implements patchPayment operation.
 	//
 	// Patches an outbound payment.

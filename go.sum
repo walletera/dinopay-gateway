@@ -169,8 +169,8 @@ github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907 h1:j+si5mhKatrHb
 github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907/go.mod h1:F0dBdQGl4gpFZkZFVMG0xdHZ/LWvHGtiMWU/FtMyiYA=
 github.com/walletera/mockserver-go-client v0.0.1 h1:w5KEuwWxehfvN4Ooai5AgecmtxreKUHZRETAf5/jUSQ=
 github.com/walletera/mockserver-go-client v0.0.1/go.mod h1:2IFxURJRzsHqT+1fxNO1RlUuUTqEj29d5kME8dVF2og=
-github.com/walletera/payments-types v0.0.2 h1:Df28EC0Ky5RG+MGdsC1xKDPcyp2Q3FiX22fkUetwg6E=
-github.com/walletera/payments-types v0.0.2/go.mod h1:OH/q/5x3dU1qPksdtH/FYtGFxBOhml17wJFpfUD4k+A=
+github.com/walletera/payments-types v0.0.4 h1:LMDuysx1rNxOZvrMPCCAyrIZCpZa5jeXWUEAPkSPZtU=
+github.com/walletera/payments-types v0.0.4/go.mod h1:OH/q/5x3dU1qPksdtH/FYtGFxBOhml17wJFpfUD4k+A=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yusufpapurcu/wmi v1.2.3 h1:E1ctvB7uKFMOJw3fdOW32DwGE9I7t++CRUEMKvFoFiw=

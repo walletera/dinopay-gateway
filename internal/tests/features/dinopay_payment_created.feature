@@ -52,6 +52,16 @@ Feature: process DinoPay webhook event PaymentCreated
         "statusCode" : 201,
         "headers" : {
           "content-type" : [ "application/json" ]
+        },
+        "body": {
+            "id": "01937863-163a-790f-8e59-707e152dd9c7",
+            "amount": 100,
+            "currency": "USD",
+            "direction": "outbound",
+            "customerId": "9fd3bc09-99da-4486-950a-11082f5fd966",
+            "externalId": "bb17667e-daac-41f6-ada3-2c22f24caf22",
+            "status": "confirmed",
+            "createdAt": "2024-11-29T14:46:19Z"
         }
       },
       "priority" : 0,

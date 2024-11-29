@@ -273,7 +273,7 @@ github.com/walletera/dinopay/api
 ## explicit; go 1.20
 github.com/walletera/logs-watcher/newline
 github.com/walletera/logs-watcher/slog
-# github.com/walletera/message-processor v0.0.7 => /home/fedev/Code/walletera/message-processor
+# github.com/walletera/message-processor v0.0.8 => /home/fedev/Code/walletera/message-processor
 ## explicit; go 1.21
 github.com/walletera/message-processor/errors
 github.com/walletera/message-processor/events
@@ -286,7 +286,7 @@ github.com/walletera/message-processor/webhook
 # github.com/walletera/mockserver-go-client v0.0.1
 ## explicit; go 1.20
 github.com/walletera/mockserver-go-client/pkg/client
-# github.com/walletera/payments-types v0.0.2
+# github.com/walletera/payments-types v0.0.4
 ## explicit; go 1.22
 github.com/walletera/payments-types/api
 github.com/walletera/payments-types/events
