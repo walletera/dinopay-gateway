@@ -92,9 +92,9 @@ func (ev *EventsHandler) HandlePaymentCreated(ctx context.Context, paymentCreate
     return nil
 }
 
-func (ev *EventsHandler) HandlePaymentUpdated(ctx context.Context, paymentCreatedEvent paymentEvents.PaymentUpdated) errors.ProcessingError {
-    //TODO implement me
-    panic("implement me")
+func (ev *EventsHandler) HandlePaymentUpdated(_ context.Context, _ paymentEvents.PaymentUpdated) errors.ProcessingError {
+    // Ignore, nothing to do
+    return nil
 }
 
 func handleError(logger *slog.Logger, errMsg string, err error) errors.ProcessingError {
