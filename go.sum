@@ -167,6 +167,10 @@ github.com/tklauser/numcpus v0.6.1 h1:ng9scYS7az0Bk4OZLvrNXNSAO2Pxr1XXRAPyjhIx+F
 github.com/tklauser/numcpus v0.6.1/go.mod h1:1XfjsgE2zo8GVw7POkMbHENHzVg3GzmoZ9fESEdAacY=
 github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907 h1:j+si5mhKatrHb/egzaNDSO7Lca4r8PTYrjA/Ps1YLp8=
 github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907/go.mod h1:F0dBdQGl4gpFZkZFVMG0xdHZ/LWvHGtiMWU/FtMyiYA=
+github.com/walletera/logs-watcher v0.0.3 h1:F0/118dcMVAxcAJazpwiqYIUC5UeigFYyxc/h23WzaI=
+github.com/walletera/logs-watcher v0.0.3/go.mod h1:727nZgaxkTO3qau3bVgrcQR6dKqB8svDRkHsnKTGPho=
+github.com/walletera/message-processor v0.0.9 h1:jzZ1t6Mgx/8B9TG23TGxnwRaISNPyOfICryrlUdeALU=
+github.com/walletera/message-processor v0.0.9/go.mod h1:XqiB6HtMAZRoYZcIfdALuj9tnvFStKqieX23LTJ3UJs=
 github.com/walletera/mockserver-go-client v0.0.1 h1:w5KEuwWxehfvN4Ooai5AgecmtxreKUHZRETAf5/jUSQ=
 github.com/walletera/mockserver-go-client v0.0.1/go.mod h1:2IFxURJRzsHqT+1fxNO1RlUuUTqEj29d5kME8dVF2og=
 github.com/walletera/payments-types v0.0.4 h1:LMDuysx1rNxOZvrMPCCAyrIZCpZa5jeXWUEAPkSPZtU=

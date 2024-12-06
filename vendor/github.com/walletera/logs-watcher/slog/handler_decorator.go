@@ -29,9 +29,11 @@ func (h *HandlerDecorator) Handle(ctx context.Context, record slog.Record) error
 }
 
 func (h *HandlerDecorator) WithAttrs(attrs []slog.Attr) slog.Handler {
-    return NewHandlerDecorator(h.handler.WithAttrs(attrs), h.logHook)
+    h.handler = h.handler.WithAttrs(attrs)
+    return h
 }
 
 func (h *HandlerDecorator) WithGroup(name string) slog.Handler {
-    return NewHandlerDecorator(h.handler.WithGroup(name), h.logHook)
+    h.handler = h.handler.WithGroup(name)
+    return h
 }

@@ -269,11 +269,11 @@ github.com/tklauser/numcpus
 # github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907
 ## explicit; go 1.20
 github.com/walletera/dinopay/api
-# github.com/walletera/logs-watcher v0.0.3 => /home/fedev/Code/walletera/logs-watcher
+# github.com/walletera/logs-watcher v0.0.3
 ## explicit; go 1.20
 github.com/walletera/logs-watcher/newline
 github.com/walletera/logs-watcher/slog
-# github.com/walletera/message-processor v0.0.8 => /home/fedev/Code/walletera/message-processor
+# github.com/walletera/message-processor v0.0.9
 ## explicit; go 1.21
 github.com/walletera/message-processor/errors
 github.com/walletera/message-processor/events
@@ -484,5 +484,3 @@ google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
-# github.com/walletera/logs-watcher => /home/fedev/Code/walletera/logs-watcher
-# github.com/walletera/message-processor => /home/fedev/Code/walletera/message-processor

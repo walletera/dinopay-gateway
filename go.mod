@@ -11,7 +11,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.30.0
 	github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907
 	github.com/walletera/logs-watcher v0.0.3
-	github.com/walletera/message-processor v0.0.8
+	github.com/walletera/message-processor v0.0.9
 	github.com/walletera/mockserver-go-client v0.0.1
 	github.com/walletera/payments-types v0.0.4
 	go.uber.org/zap v1.27.0
@@ -88,9 +88,4 @@ require (
 	google.golang.org/grpc v1.63.2 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-)
-
-replace (
-	github.com/walletera/logs-watcher => /home/fedev/Code/walletera/logs-watcher
-	github.com/walletera/message-processor => /home/fedev/Code/walletera/message-processor
 )
