@@ -7,14 +7,15 @@ import (
     "github.com/google/uuid"
     dinopayapi "github.com/walletera/dinopay/api"
     paymentsapi "github.com/walletera/payments-types/api"
+    "github.com/walletera/werrors"
 )
 
-func updatePaymentStatus(ctx context.Context, client *paymentsapi.Client, paymentId uuid.UUID, dinopayPaymentId uuid.UUID, dinopayPaymentStatus string) error {
+func updatePaymentStatus(ctx context.Context, client *paymentsapi.Client, paymentId uuid.UUID, dinopayPaymentId uuid.UUID, dinopayPaymentStatus string) werrors.WError {
     status, err := dinopayStatus2PaymentsStatus(dinopayPaymentStatus)
     if err != nil {
         return err
     }
-    _, err = client.PatchPayment(
+    _, patchPaymentErr := client.PatchPayment(
         ctx,
         &paymentsapi.PaymentUpdate{
             PaymentId: paymentId,
@@ -27,13 +28,14 @@ func updatePaymentStatus(ctx context.Context, client *paymentsapi.Client, paymen
         paymentsapi.PatchPaymentParams{
             PaymentId: paymentId,
         })
-    if err != nil {
-        return fmt.Errorf("failed updating withdrawal in payments service: %w", err)
+    if patchPaymentErr != nil {
+        // TODO handle error
+        return werrors.NewRetryableInternalError("failed updating withdrawal in payments service: %w", err)
     }
     return nil
 }
 
-func dinopayStatus2PaymentsStatus(dinopayStatus string) (paymentsapi.PaymentStatus, error) {
+func dinopayStatus2PaymentsStatus(dinopayStatus string) (paymentsapi.PaymentStatus, werrors.WError) {
     var status paymentsapi.PaymentStatus
     switch dinopayStatus {
     case string(dinopayapi.PaymentStatusPending):
@@ -43,7 +45,7 @@ func dinopayStatus2PaymentsStatus(dinopayStatus string) (paymentsapi.PaymentStat
     case string(dinopayapi.PaymentStatusRejected):
         status = paymentsapi.PaymentStatusFailed
     default:
-        return "", fmt.Errorf("unknown dinopay payment status %s", dinopayStatus)
+        return "", werrors.NewNonRetryableInternalError(fmt.Sprintf("unknown dinopay payment status %s", dinopayStatus))
     }
     return status, nil
 }

@@ -65,7 +65,7 @@ github.com/distribution/reference
 ## explicit; go 1.13
 github.com/dlclark/regexp2
 github.com/dlclark/regexp2/syntax
-# github.com/docker/docker v25.0.5+incompatible
+# github.com/docker/docker v25.0.6+incompatible
 ## explicit
 github.com/docker/docker/api
 github.com/docker/docker/api/types
@@ -269,29 +269,30 @@ github.com/tklauser/numcpus
 # github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907
 ## explicit; go 1.20
 github.com/walletera/dinopay/api
+# github.com/walletera/eventskit v0.0.2
+## explicit; go 1.22.4
+github.com/walletera/eventskit/events
+github.com/walletera/eventskit/eventsourcing
+github.com/walletera/eventskit/eventstoredb
+github.com/walletera/eventskit/messages
+github.com/walletera/eventskit/rabbitmq
+github.com/walletera/eventskit/webhook
 # github.com/walletera/logs-watcher v0.0.3
 ## explicit; go 1.20
 github.com/walletera/logs-watcher/newline
 github.com/walletera/logs-watcher/slog
-# github.com/walletera/message-processor v0.0.9
-## explicit; go 1.21
-github.com/walletera/message-processor/errors
-github.com/walletera/message-processor/events
-github.com/walletera/message-processor/eventsourcing
-github.com/walletera/message-processor/eventstoredb
-github.com/walletera/message-processor/messages
-github.com/walletera/message-processor/payments
-github.com/walletera/message-processor/rabbitmq
-github.com/walletera/message-processor/webhook
 # github.com/walletera/mockserver-go-client v0.0.1
 ## explicit; go 1.20
 github.com/walletera/mockserver-go-client/pkg/client
-# github.com/walletera/payments-types v0.0.4
-## explicit; go 1.22
+# github.com/walletera/payments-types v0.0.8
+## explicit; go 1.22.4
 github.com/walletera/payments-types/api
 github.com/walletera/payments-types/events
 github.com/walletera/payments-types/pkg/wogen
 github.com/walletera/payments-types/pkg/wuuid
+# github.com/walletera/werrors v0.0.6
+## explicit; go 1.22.4
+github.com/walletera/werrors
 # github.com/yusufpapurcu/wmi v1.2.3
 ## explicit; go 1.16
 github.com/yusufpapurcu/wmi

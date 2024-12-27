@@ -5,7 +5,7 @@ import (
     "fmt"
 
     "github.com/EventStore/EventStore-Client-Go/v4/esdb"
-    "github.com/walletera/message-processor/messages"
+    "github.com/walletera/eventskit/messages"
 )
 
 type MessagesConsumer struct {

@@ -3,10 +3,10 @@ package messages
 import (
     "time"
 
-    "github.com/walletera/message-processor/errors"
+    "github.com/walletera/werrors"
 )
 
-type ErrorCallback func(processingError errors.ProcessingError)
+type ErrorCallback func(processingError werrors.WError)
 
 type ProcessorOpts struct {
     errorCallback     ErrorCallback
@@ -14,7 +14,7 @@ type ProcessorOpts struct {
 }
 
 var defaultProcessorOpts = ProcessorOpts{
-    errorCallback:     func(processorError errors.ProcessingError) {},
+    errorCallback:     func(err werrors.WError) {},
     processingTimeout: 10 * time.Minute,
 }
 

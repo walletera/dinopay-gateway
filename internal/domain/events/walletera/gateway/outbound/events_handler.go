@@ -5,26 +5,26 @@ import (
     "errors"
     "log/slog"
 
-    "github.com/walletera/dinopay-gateway/internal/domain/events"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway/inbound"
     "github.com/walletera/dinopay-gateway/pkg/logattr"
-    procerrors "github.com/walletera/message-processor/errors"
+    "github.com/walletera/eventskit/eventsourcing"
     paymentsapi "github.com/walletera/payments-types/api"
+    "github.com/walletera/werrors"
 )
 
 type EventsHandler interface {
-    VisitOutboundPaymentCreated(ctx context.Context, outboundPaymentCreated PaymentCreated) procerrors.ProcessingError
-    VisitOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated PaymentUpdated) procerrors.ProcessingError
+    HandleOutboundPaymentCreated(ctx context.Context, outboundPaymentCreated PaymentCreated) werrors.WError
+    HandleOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated PaymentUpdated) werrors.WError
 }
 
 type EventsHandlerImpl struct {
-    db             events.DB
+    db             eventsourcing.DB
     paymentsClient *paymentsapi.Client
     deserializer   *EventsDeserializer
     logger         *slog.Logger
 }
 
-func NewEventsHandlerImpl(db events.DB, client *paymentsapi.Client, logger *slog.Logger) *EventsHandlerImpl {
+func NewEventsHandlerImpl(db eventsourcing.DB, client *paymentsapi.Client, logger *slog.Logger) *EventsHandlerImpl {
     return &EventsHandlerImpl{
         db:             db,
         paymentsClient: client,
@@ -33,30 +33,30 @@ func NewEventsHandlerImpl(db events.DB, client *paymentsapi.Client, logger *slog
     }
 }
 
-func (ev *EventsHandlerImpl) VisitOutboundPaymentCreated(ctx context.Context, outboundPaymentCreated PaymentCreated) procerrors.ProcessingError {
+func (ev *EventsHandlerImpl) HandleOutboundPaymentCreated(ctx context.Context, outboundPaymentCreated PaymentCreated) werrors.WError {
     err := NewOutboundPaymentCreatedHandler(ev.paymentsClient).Handle(ctx, outboundPaymentCreated)
     if err != nil {
         ev.logger.Error(
             err.Error(),
             logattr.EventType(outboundPaymentCreated.Type()),
-            logattr.WithdrawalId(outboundPaymentCreated.WithdrawalId.String()))
-        return procerrors.NewInternalError(err.Error())
+            logattr.PaymentId(outboundPaymentCreated.PaymentId.String()))
+        return werrors.NewWrappedError(err, "failed handling outbound PaymentCreated event")
     }
-    ev.logger.Info("OutboundPaymentCreated event processed successfully", logattr.WithdrawalId(outboundPaymentCreated.WithdrawalId.String()))
+    ev.logger.Info("OutboundPaymentCreated event processed successfully", logattr.PaymentId(outboundPaymentCreated.PaymentId.String()))
     return nil
 }
 
-func (ev *EventsHandlerImpl) VisitOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated PaymentUpdated) procerrors.ProcessingError {
+func (ev *EventsHandlerImpl) HandleOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated PaymentUpdated) werrors.WError {
     err := NewOutboundPaymentUpdatedHandler(ev.db, ev.paymentsClient).Handle(ctx, outboundPaymentUpdated)
     if err != nil {
         logOutboundPaymentUpdatedHandlerError(ev.logger, outboundPaymentUpdated, err)
-        return procerrors.NewInternalError(err.Error())
+        return werrors.NewWrappedError(err, "failed handling outbound PaymentUpdated event")
     }
     ev.logger.Info("OutboundPaymentUpdated event processed successfully", logattr.DinopayPaymentId(outboundPaymentUpdated.DinopayPaymentId.String()))
     return nil
 }
 
-func (ev *EventsHandlerImpl) HandleInboundPaymentReceived(ctx context.Context, inboundPaymentReceived inbound.PaymentReceived) procerrors.ProcessingError {
+func (ev *EventsHandlerImpl) HandleInboundPaymentReceived(ctx context.Context, inboundPaymentReceived inbound.PaymentReceived) werrors.WError {
     //err := NewInboundPaymentReceivedHandler(ev.db, ev.paymentsClient).Handle(ctx, inboundPaymentReceived)
     //if err != nil {
     //    logOutboundPaymentUpdatedHandlerError(ev.logger, inboundPaymentReceived, err)
@@ -74,7 +74,7 @@ func logOutboundPaymentUpdatedHandlerError(logger *slog.Logger, outboundPaymentU
     var handlerErr *HandlerError
     isHandlerErr := errors.As(err, &handlerErr)
     if isHandlerErr {
-        logger = logger.With(logattr.WithdrawalId(handlerErr.withdrawalId))
+        logger = logger.With(logattr.PaymentId(handlerErr.withdrawalId))
     }
     logger.Error(err.Error())
 }

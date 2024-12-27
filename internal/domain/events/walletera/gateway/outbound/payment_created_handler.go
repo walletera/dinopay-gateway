@@ -4,6 +4,7 @@ import (
     "context"
 
     paymentsapi "github.com/walletera/payments-types/api"
+    "github.com/walletera/werrors"
 )
 
 type PaymentCreatedHandler struct {
@@ -16,11 +17,11 @@ func NewOutboundPaymentCreatedHandler(client *paymentsapi.Client) *PaymentCreate
     }
 }
 
-func (h *PaymentCreatedHandler) Handle(ctx context.Context, outboundPaymentCreated PaymentCreated) error {
+func (h *PaymentCreatedHandler) Handle(ctx context.Context, outboundPaymentCreated PaymentCreated) werrors.WError {
     return updatePaymentStatus(
         ctx,
         h.client,
-        outboundPaymentCreated.WithdrawalId,
+        outboundPaymentCreated.PaymentId,
         outboundPaymentCreated.DinopayPaymentId,
         outboundPaymentCreated.DinopayPaymentStatus,
     )

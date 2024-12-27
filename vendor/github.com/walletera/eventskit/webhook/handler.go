@@ -6,7 +6,7 @@ import (
     "net/http"
     "time"
 
-    "github.com/walletera/message-processor/messages"
+    "github.com/walletera/eventskit/messages"
 )
 
 const (

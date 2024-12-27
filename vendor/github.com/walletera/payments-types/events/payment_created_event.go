@@ -6,11 +6,11 @@ import (
     "fmt"
 
     "github.com/google/uuid"
-    "github.com/walletera/message-processor/errors"
-    "github.com/walletera/message-processor/events"
+    "github.com/walletera/eventskit/events"
     "github.com/walletera/payments-types/api"
     "github.com/walletera/payments-types/pkg/wogen"
     "github.com/walletera/payments-types/pkg/wuuid"
+    "github.com/walletera/werrors"
 )
 
 var _ events.Event[Handler] = PaymentCreated{}
@@ -38,8 +38,8 @@ func NewPaymentCreated(correlationId string, data api.Payment) PaymentCreated {
     }
 }
 
-func (w PaymentCreated) Accept(ctx context.Context, visitor Handler) errors.ProcessingError {
-    return visitor.HandlePaymentCreated(ctx, w)
+func (w PaymentCreated) Accept(ctx context.Context, handler Handler) werrors.WError {
+    return handler.HandlePaymentCreated(ctx, w)
 }
 
 func (w PaymentCreated) ID() string {

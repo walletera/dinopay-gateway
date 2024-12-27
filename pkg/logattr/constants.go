@@ -10,8 +10,8 @@ func Component(component string) slog.Attr {
     return slog.String("component", component)
 }
 
-func WithdrawalId(withdrawalId string) slog.Attr {
-    return slog.String("withdrawal_id", withdrawalId)
+func PaymentId(paymentId string) slog.Attr {
+    return slog.String("payment_id", paymentId)
 }
 
 func DinopayPaymentId(dinopayPaymentId string) slog.Attr {

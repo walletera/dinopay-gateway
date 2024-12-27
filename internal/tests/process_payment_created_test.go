@@ -8,9 +8,9 @@ import (
 
     "github.com/cucumber/godog"
     "github.com/walletera/dinopay-gateway/internal/app"
-    "github.com/walletera/message-processor/events"
-    "github.com/walletera/message-processor/payments"
-    "github.com/walletera/message-processor/rabbitmq"
+    "github.com/walletera/eventskit/events"
+
+    "github.com/walletera/eventskit/rabbitmq"
 )
 
 const (
@@ -67,8 +67,8 @@ func aPaymentsEndpointToUpdatePayments(ctx context.Context, mockserverExpectatio
 
 func theEventIsPublished(ctx context.Context) (context.Context, error) {
     publisher, err := rabbitmq.NewClient(
-        rabbitmq.WithExchangeName(payments.RabbitMQExchangeName),
-        rabbitmq.WithExchangeType(payments.RabbitMQExchangeType),
+        rabbitmq.WithExchangeName(app.RabbitMQPaymentsExchangeName),
+        rabbitmq.WithExchangeType(app.RabbitMQExchangeType),
     )
     if err != nil {
         return nil, fmt.Errorf("error creating rabbitmq client: %s", err.Error())

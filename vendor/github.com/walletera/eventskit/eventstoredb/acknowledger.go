@@ -2,7 +2,7 @@ package eventstoredb
 
 import (
     "github.com/EventStore/EventStore-Client-Go/v4/esdb"
-    "github.com/walletera/message-processor/messages"
+    "github.com/walletera/eventskit/messages"
 )
 
 // TODO make this configurable

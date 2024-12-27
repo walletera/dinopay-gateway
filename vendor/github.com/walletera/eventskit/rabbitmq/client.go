@@ -5,8 +5,8 @@ import (
     "fmt"
 
     amqp "github.com/rabbitmq/amqp091-go"
-    "github.com/walletera/message-processor/events"
-    "github.com/walletera/message-processor/messages"
+    "github.com/walletera/eventskit/events"
+    "github.com/walletera/eventskit/messages"
 )
 
 const (

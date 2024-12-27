@@ -5,8 +5,8 @@ import (
     "errors"
     "fmt"
 
-    procerrors "github.com/walletera/message-processor/errors"
-    "github.com/walletera/message-processor/events"
+    "github.com/walletera/eventskit/events"
+    "github.com/walletera/werrors"
 )
 
 type Processor[Handler any] struct {
@@ -52,7 +52,7 @@ func (p *Processor[Handler]) startMessageConsumer(ctx context.Context) (<-chan M
         <-ctx.Done()
         err := p.messageConsumer.Close()
         if err != nil {
-            p.opts.errorCallback(procerrors.NewInternalError("failed closing message consumer: " + err.Error()))
+            p.opts.errorCallback(werrors.NewRetryableInternalError("failed closing message consumer: " + err.Error()))
         }
     }()
     return msgCh, nil
@@ -79,7 +79,7 @@ func (p *Processor[Handler]) processMsgWithTimeout(ctx context.Context, msg Mess
     err := ctxWithTimeout.Err()
     if err != nil {
         if errors.Is(err, context.DeadlineExceeded) {
-            p.handleError(msg, procerrors.NewTimeoutError(err.Error()))
+            p.handleError(msg, werrors.NewTimeoutError(err.Error()))
         }
     }
 }
@@ -87,7 +87,7 @@ func (p *Processor[Handler]) processMsgWithTimeout(ctx context.Context, msg Mess
 func (p *Processor[Handler]) processMsg(ctx context.Context, message Message) {
     event, err := p.eventsDeserializer.Deserialize(message.Payload())
     if err != nil {
-        p.handleError(message, procerrors.NewUnprocessableMessageError(err.Error()))
+        p.handleError(message, werrors.NewUnprocessableMessageError(err.Error()))
         return
     }
     if event == nil {
@@ -101,7 +101,7 @@ func (p *Processor[Handler]) processMsg(ctx context.Context, message Message) {
     }
 }
 
-func (p *Processor[Handler]) handleError(message Message, err procerrors.ProcessingError) {
+func (p *Processor[Handler]) handleError(message Message, err werrors.WError) {
     if p.opts.errorCallback != nil {
         p.opts.errorCallback(err)
     }

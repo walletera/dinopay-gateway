@@ -4,9 +4,9 @@ import (
     "context"
     "fmt"
 
-    "github.com/walletera/dinopay-gateway/internal/domain/events"
-    "github.com/walletera/message-processor/errors"
+    "github.com/walletera/eventskit/eventsourcing"
     paymentsApi "github.com/walletera/payments-types/api"
+    "github.com/walletera/werrors"
 )
 
 type HandlerError struct {
@@ -19,14 +19,14 @@ func (h *HandlerError) Error() string {
 }
 
 type PaymentUpdatedHandler struct {
-    db             events.DB
+    db             eventsourcing.DB
     paymentsClient *paymentsApi.Client
     deserializer   *EventsDeserializer
 
     outboundPaymentCreated *PaymentCreated
 }
 
-func NewOutboundPaymentUpdatedHandler(db events.DB, client *paymentsApi.Client) *PaymentUpdatedHandler {
+func NewOutboundPaymentUpdatedHandler(db eventsourcing.DB, client *paymentsApi.Client) *PaymentUpdatedHandler {
     return &PaymentUpdatedHandler{
         db:             db,
         paymentsClient: client,
@@ -34,16 +34,16 @@ func NewOutboundPaymentUpdatedHandler(db events.DB, client *paymentsApi.Client) 
     }
 }
 
-func (h *PaymentUpdatedHandler) Handle(ctx context.Context, outboundPaymentUpdated PaymentUpdated) errors.ProcessingError {
+func (h *PaymentUpdatedHandler) Handle(ctx context.Context, outboundPaymentUpdated PaymentUpdated) werrors.WError {
     streamName := BuildOutboundPaymentStreamName(outboundPaymentUpdated.DinopayPaymentId.String())
-    rawEvents, err := h.db.ReadEvents(streamName)
-    if err != nil {
-        return errors.NewInternalError(fmt.Sprintf("failed retrieving events from stream %s: %s", streamName, err.Error()))
+    retrievedEvents, werr := h.db.ReadEvents(ctx, streamName)
+    if werr != nil {
+        return werrors.NewWrappedError(werr)
     }
-    for _, rawEvent := range rawEvents {
-        event, err := h.deserializer.Deserialize(rawEvent)
+    for _, retrievedEvent := range retrievedEvents {
+        event, err := h.deserializer.Deserialize(retrievedEvent.RawEvent)
         if err != nil {
-            return errors.NewInternalError(fmt.Sprintf("failed deserializing outboundPaymentUpdated event from raw event %s: %s", rawEvent, err.Error()))
+            return werrors.NewNonRetryableInternalError("failed deserializing outboundPaymentUpdated event from raw event %s: %s", retrievedEvent, err.Error())
         }
         err = event.Accept(ctx, h)
         if err != nil {
@@ -53,18 +53,18 @@ func (h *PaymentUpdatedHandler) Handle(ctx context.Context, outboundPaymentUpdat
     return nil
 }
 
-func (h *PaymentUpdatedHandler) VisitOutboundPaymentCreated(_ context.Context, outboundPaymentCreated PaymentCreated) errors.ProcessingError {
+func (h *PaymentUpdatedHandler) HandleOutboundPaymentCreated(_ context.Context, outboundPaymentCreated PaymentCreated) werrors.WError {
     h.outboundPaymentCreated = &outboundPaymentCreated
     return nil
 }
 
-func (h *PaymentUpdatedHandler) VisitOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated PaymentUpdated) errors.ProcessingError {
+func (h *PaymentUpdatedHandler) HandleOutboundPaymentUpdated(ctx context.Context, outboundPaymentUpdated PaymentUpdated) werrors.WError {
     if h.outboundPaymentCreated == nil {
-        return errors.NewInternalError("missing OutboundPaymentCreated event")
+        return werrors.NewNonRetryableInternalError("missing OutboundPaymentCreated event")
     }
-    err := updatePaymentStatus(ctx, h.paymentsClient, h.outboundPaymentCreated.WithdrawalId, outboundPaymentUpdated.DinopayPaymentId, outboundPaymentUpdated.DinopayPaymentStatus)
+    err := updatePaymentStatus(ctx, h.paymentsClient, h.outboundPaymentCreated.PaymentId, outboundPaymentUpdated.DinopayPaymentId, outboundPaymentUpdated.DinopayPaymentStatus)
     if err != nil {
-        return errors.NewInternalError(err.Error())
+        return werrors.NewWrappedError(err, "failed handling outbound PaymentCreated event")
     }
     return nil
 }

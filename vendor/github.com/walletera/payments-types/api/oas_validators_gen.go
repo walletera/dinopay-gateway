@@ -131,3 +131,19 @@ func (s *PaymentUpdate) Validate() error {
 	}
 	return nil
 }
+
+func (s PostPaymentBadRequest) Validate() error {
+	alias := (ErrorMessage)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s PostPaymentConflict) Validate() error {
+	alias := (ErrorMessage)(s)
+	if err := alias.Validate(); err != nil {
+		return err
+	}
+	return nil
+}

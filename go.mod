@@ -1,19 +1,17 @@
 module github.com/walletera/dinopay-gateway
 
-go 1.22
-
-toolchain go1.22.4
+go 1.22.4
 
 require (
-	github.com/EventStore/EventStore-Client-Go/v4 v4.1.0
 	github.com/cucumber/godog v0.14.0
 	github.com/google/uuid v1.6.0
 	github.com/testcontainers/testcontainers-go v0.30.0
 	github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907
+	github.com/walletera/eventskit v0.0.2
 	github.com/walletera/logs-watcher v0.0.3
-	github.com/walletera/message-processor v0.0.9
 	github.com/walletera/mockserver-go-client v0.0.1
-	github.com/walletera/payments-types v0.0.4
+	github.com/walletera/payments-types v0.0.8
+	github.com/walletera/werrors v0.0.6
 	go.uber.org/zap v1.27.0
 	go.uber.org/zap/exp v0.2.0
 	golang.org/x/sync v0.7.0
@@ -22,6 +20,7 @@ require (
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
+	github.com/EventStore/EventStore-Client-Go/v4 v4.1.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
@@ -32,7 +31,7 @@ require (
 	github.com/cucumber/messages/go/v21 v21.0.1 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/dlclark/regexp2 v1.11.0 // indirect
-	github.com/docker/docker v25.0.5+incompatible // indirect
+	github.com/docker/docker v25.0.6+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/fatih/color v1.17.0 // indirect

@@ -5,12 +5,12 @@ import (
     "log/slog"
 
     "github.com/walletera/dinopay-gateway/pkg/logattr"
-    procerrors "github.com/walletera/message-processor/errors"
     paymentsapi "github.com/walletera/payments-types/api"
+    "github.com/walletera/werrors"
 )
 
 type EventsHandler interface {
-    HandleInboundPaymentReceived(ctx context.Context, inboundPaymentReceived PaymentReceived) procerrors.ProcessingError
+    HandleInboundPaymentReceived(ctx context.Context, inboundPaymentReceived PaymentReceived) werrors.WError
 }
 
 type EventsHandlerImpl struct {
@@ -27,10 +27,10 @@ func NewEventsHandlerImpl(client *paymentsapi.Client, logger *slog.Logger) *Even
     }
 }
 
-func (ev *EventsHandlerImpl) HandleInboundPaymentReceived(ctx context.Context, inboundPaymentReceived PaymentReceived) procerrors.ProcessingError {
+func (ev *EventsHandlerImpl) HandleInboundPaymentReceived(ctx context.Context, inboundPaymentReceived PaymentReceived) werrors.WError {
 
     depositPostBody := &paymentsapi.Payment{
-        ID: paymentsapi.NewOptUUID(inboundPaymentReceived.DepositId),
+        ID: inboundPaymentReceived.PaymentId,
         // FIXME
         Amount:     float64(inboundPaymentReceived.Amount),
         Currency:   inboundPaymentReceived.Currency,
@@ -39,9 +39,9 @@ func (ev *EventsHandlerImpl) HandleInboundPaymentReceived(ctx context.Context, i
     }
     _, err := ev.paymentsApiClient.PostPayment(ctx, depositPostBody, paymentsapi.PostPaymentParams{})
     if err != nil {
-        // TODO this may be a retryable error
+        // TODO handle this error properly
         ev.logger.Error("failed creating deposit on payments api", logattr.Error(err.Error()))
-        return procerrors.NewInternalError(err.Error())
+        return werrors.NewRetryableInternalError(err.Error())
     }
     // TODO handle response
     ev.logger.Info("Gateway event InboundPaymentReceived processed successfully", logattr.EventType(inboundPaymentReceived.Type()))

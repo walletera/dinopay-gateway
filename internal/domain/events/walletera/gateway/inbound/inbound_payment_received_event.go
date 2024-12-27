@@ -8,8 +8,8 @@ import (
 
     "github.com/google/uuid"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway"
-    "github.com/walletera/message-processor/errors"
-    "github.com/walletera/message-processor/events"
+    "github.com/walletera/eventskit/events"
+    "github.com/walletera/werrors"
 )
 
 var _ events.Event[EventsHandler] = PaymentReceived{}
@@ -18,7 +18,7 @@ type PaymentReceived struct {
     Id               uuid.UUID `json:"id,omitempty"`
     DinopayPaymentId uuid.UUID `json:"externalId,omitempty"`
     CustomerId       uuid.UUID `json:"customerId,omitempty"`
-    DepositId        uuid.UUID `json:"depositId,omitempty"`
+    PaymentId        uuid.UUID `json:"depositId,omitempty"`
     // FIXME Amount must be float
     Amount             int       `json:"amount"`
     Currency           string    `json:"currency"`
@@ -48,7 +48,7 @@ func (i PaymentReceived) CorrelationID() string {
     panic("not implemented yet")
 }
 
-func (i PaymentReceived) Accept(ctx context.Context, handler EventsHandler) errors.ProcessingError {
+func (i PaymentReceived) Accept(ctx context.Context, handler EventsHandler) werrors.WError {
     return handler.HandleInboundPaymentReceived(ctx, i)
 }
 

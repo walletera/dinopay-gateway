@@ -7,19 +7,18 @@ import (
     "time"
 
     "github.com/walletera/dinopay-gateway/internal/adapters/dinopay"
-    esdbadapter "github.com/walletera/dinopay-gateway/internal/adapters/eventstoredb"
     dinopayevents "github.com/walletera/dinopay-gateway/internal/domain/events/dinopay"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway/inbound"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway/outbound"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/payments"
     "github.com/walletera/dinopay-gateway/pkg/logattr"
-    "github.com/walletera/message-processor/errors"
-    "github.com/walletera/message-processor/eventstoredb"
-    "github.com/walletera/message-processor/messages"
-    "github.com/walletera/message-processor/rabbitmq"
-    "github.com/walletera/message-processor/webhook"
+    "github.com/walletera/eventskit/eventstoredb"
+    "github.com/walletera/eventskit/messages"
+    "github.com/walletera/eventskit/rabbitmq"
+    "github.com/walletera/eventskit/webhook"
     paymentsapi "github.com/walletera/payments-types/api"
     paymentsevents "github.com/walletera/payments-types/events"
+    "github.com/walletera/werrors"
     "go.uber.org/zap"
     "go.uber.org/zap/exp/zapslog"
     "go.uber.org/zap/zapcore"
@@ -180,7 +179,7 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
         return nil, fmt.Errorf("failed getting esdb client: %w", err)
     }
 
-    eventsDB := esdbadapter.NewDB(esdbClient)
+    eventsDB := eventstoredb.NewDB(esdbClient)
     handler := payments.NewEventsHandler(dinopayClient, eventsDB, logger)
     queueName := fmt.Sprintf(RabbitMQQueueName)
 
@@ -224,7 +223,7 @@ func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
     if err != nil {
         return nil, fmt.Errorf("failed getting esdb client: %w", err)
     }
-    eventsDB := esdbadapter.NewDB(esdbClient)
+    eventsDB := eventstoredb.NewDB(esdbClient)
     eventsHandler := dinopayevents.NewEventsHandlerImpl(eventsDB, paymentsClient, logger)
     return messages.NewProcessor[dinopayevents.EventsHandler](
         webhookConsumer,
@@ -288,7 +287,7 @@ func createGatewayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
         return nil, fmt.Errorf("failed creating esdb client: %w", err)
     }
 
-    eventsDB := esdbadapter.NewDB(esdbClient)
+    eventsDB := eventstoredb.NewDB(esdbClient)
 
     eventsHandler := outbound.NewEventsHandlerImpl(eventsDB, paymentsClient, logger)
     return messages.NewProcessor[outbound.EventsHandler](
@@ -304,9 +303,9 @@ func createGatewayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
 }
 
 func withErrorCallback(logger *slog.Logger) messages.ProcessorOpt {
-    return messages.WithErrorCallback(func(processingError errors.ProcessingError) {
+    return messages.WithErrorCallback(func(wError werrors.WError) {
         logger.Error(
             "failed processing message",
-            logattr.Error(processingError.Message()))
+            logattr.Error(wError.Message()))
     })
 }
