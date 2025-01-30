@@ -60,6 +60,9 @@ func decodeGetPaymentResponse(resp *http.Response) (res GetPaymentRes, _ error) 
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 401:
+		// Code 401.
+		return &GetPaymentUnauthorized{}, nil
 	case 404:
 		// Code 404.
 		return &GetPaymentNotFound{}, nil
@@ -119,6 +122,9 @@ func decodePatchPaymentResponse(resp *http.Response) (res PatchPaymentRes, _ err
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 401:
+		// Code 401.
+		return &PatchPaymentUnauthorized{}, nil
 	case 500:
 		// Code 500.
 		return &PatchPaymentInternalServerError{}, nil
@@ -216,6 +222,9 @@ func decodePostPaymentResponse(resp *http.Response) (res PostPaymentRes, _ error
 		default:
 			return res, validate.InvalidContentType(ct)
 		}
+	case 401:
+		// Code 401.
+		return &PostPaymentUnauthorized{}, nil
 	case 409:
 		// Code 409.
 		ct, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))

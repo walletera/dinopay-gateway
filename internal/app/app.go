@@ -12,6 +12,7 @@ import (
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway/outbound"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/payments"
     "github.com/walletera/dinopay-gateway/pkg/logattr"
+    "github.com/walletera/dinopay-gateway/pkg/paymentsauth"
     "github.com/walletera/eventskit/eventstoredb"
     "github.com/walletera/eventskit/messages"
     "github.com/walletera/eventskit/rabbitmq"
@@ -214,7 +215,7 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
 }
 
 func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[dinopayevents.EventsHandler], error) {
-    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl)
+    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl, paymentsauth.NewSecuritySource())
     if err != nil {
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
     }
@@ -239,7 +240,7 @@ func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
 
 func createGatewayInboundMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[inbound.EventsHandler], error) {
 
-    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl)
+    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl, paymentsauth.NewSecuritySource())
     if err != nil {
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
     }
@@ -268,7 +269,7 @@ func createGatewayInboundMessageProcessor(app *App, logger *slog.Logger) (*messa
 
 func createGatewayMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[outbound.EventsHandler], error) {
 
-    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl)
+    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl, paymentsauth.NewSecuritySource())
     if err != nil {
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
     }

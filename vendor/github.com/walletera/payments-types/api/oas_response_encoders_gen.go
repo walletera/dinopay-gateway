@@ -26,6 +26,12 @@ func encodeGetPaymentResponse(response GetPaymentRes, w http.ResponseWriter, spa
 
 		return nil
 
+	case *GetPaymentUnauthorized:
+		w.WriteHeader(401)
+		span.SetStatus(codes.Error, http.StatusText(401))
+
+		return nil
+
 	case *GetPaymentNotFound:
 		w.WriteHeader(404)
 		span.SetStatus(codes.Error, http.StatusText(404))
@@ -61,6 +67,12 @@ func encodePatchPaymentResponse(response PatchPaymentRes, w http.ResponseWriter,
 		if _, err := e.WriteTo(w); err != nil {
 			return errors.Wrap(err, "write")
 		}
+
+		return nil
+
+	case *PatchPaymentUnauthorized:
+		w.WriteHeader(401)
+		span.SetStatus(codes.Error, http.StatusText(401))
 
 		return nil
 
@@ -100,6 +112,12 @@ func encodePostPaymentResponse(response PostPaymentRes, w http.ResponseWriter, s
 		if _, err := e.WriteTo(w); err != nil {
 			return errors.Wrap(err, "write")
 		}
+
+		return nil
+
+	case *PostPaymentUnauthorized:
+		w.WriteHeader(401)
+		span.SetStatus(codes.Error, http.StatusText(401))
 
 		return nil
 
