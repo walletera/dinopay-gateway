@@ -15,12 +15,11 @@ import (
 var _ events.Event[EventsHandler] = PaymentReceived{}
 
 type PaymentReceived struct {
-    Id               uuid.UUID `json:"id,omitempty"`
-    DinopayPaymentId uuid.UUID `json:"externalId,omitempty"`
-    CustomerId       uuid.UUID `json:"customerId,omitempty"`
-    PaymentId        uuid.UUID `json:"depositId,omitempty"`
-    // FIXME Amount must be float
-    Amount             int       `json:"amount"`
+    Id                 uuid.UUID `json:"id,omitempty"`
+    DinopayPaymentId   uuid.UUID `json:"externalId,omitempty"`
+    CustomerId         uuid.UUID `json:"customerId,omitempty"`
+    PaymentId          uuid.UUID `json:"depositId,omitempty"`
+    Amount             float64   `json:"amount"`
     Currency           string    `json:"currency"`
     SourceAccount      Account   `json:"sourceAccount"`
     DestinationAccount Account   `json:"destinationAccount"`

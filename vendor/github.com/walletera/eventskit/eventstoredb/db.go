@@ -60,8 +60,9 @@ func (db *DB) AppendEvents(ctx context.Context, streamName string, expectedAggre
 
 func (db *DB) ReadEvents(ctx context.Context, streamName string) ([]eventsourcing.RetrievedEvent, werrors.WError) {
     stream, err := db.client.ReadStream(ctx, streamName, esdb.ReadStreamOptions{
-        Direction: esdb.Forwards,
-        From:      esdb.Start{},
+        Direction:      esdb.Forwards,
+        From:           esdb.Start{},
+        ResolveLinkTos: true,
     }, readEventsMaxCount)
 
     if err != nil {

@@ -6,7 +6,7 @@ import (
 
     "github.com/google/uuid"
     dinopayapi "github.com/walletera/dinopay/api"
-    paymentsapi "github.com/walletera/payments-types/api"
+    paymentsapi "github.com/walletera/payments-types/privateapi"
     "github.com/walletera/werrors"
 )
 
@@ -18,12 +18,9 @@ func updatePaymentStatus(ctx context.Context, client *paymentsapi.Client, paymen
     _, patchPaymentErr := client.PatchPayment(
         ctx,
         &paymentsapi.PaymentUpdate{
-            PaymentId: paymentId,
-            ExternalId: paymentsapi.OptUUID{
-                Value: dinopayPaymentId,
-                Set:   true,
-            },
-            Status: status,
+            PaymentId:  paymentId,
+            ExternalId: paymentsapi.NewOptString(dinopayPaymentId.String()),
+            Status:     status,
         },
         paymentsapi.PatchPaymentParams{
             PaymentId: paymentId,

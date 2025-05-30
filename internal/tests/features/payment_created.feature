@@ -16,19 +16,32 @@ Feature: process PaymentCreated event
       "type": "PaymentCreated",
       "data": {
         "id": "0ae1733e-7538-4908-b90a-5721670cb093",
+        "customerId": "abbb8aa3-87f9-4b2b-889f-8962cf708cfc",
         "amount": 100,
         "currency": "USD",
+        "gateway": "dinopay",
         "direction": "outbound",
-        "customerId": "2432318c-4ff3-4ac0-b734-9b61779e2e46",
         "status": "pending",
-        "beneficiary": {
-          "bankName": "dinopay",
-          "bankId": "dinopay",
-          "accountHolder": "Richard Roe",
-          "routingKey": "123456789123456",
-          "accountNumber": "1200079635"
+        "debtor": {
+          "institutionName": "dinopay",
+          "institutionId": "dinopay",
+          "currency": "ARS",
+          "accountDetails": {
+            "accountType": "dinopay",
+            "accountHolder": "Richard Roe",
+            "accountNumber": "1200079635"
+          }
         },
-        "createdAt": "2024-10-04T00:00:00Z"
+        "beneficiary": {
+          "institutionName": "dinopay",
+          "institutionId": "dinopay",
+          "currency": "ARS",
+          "accountDetails": {
+             "accountType": "dinopay",
+             "accountHolder": "Richard Roe",
+            "accountNumber": "1200079635"
+            }
+        }
       }
     }
     """
@@ -133,24 +146,37 @@ Feature: process PaymentCreated event
   Scenario: payment created event processing failed when trying to create payment on Dinopay
     Given a PaymentCreated event:
     """json
-    {
+{
       "id": "0fg1833e-3438-4908-b90a-5721670cb067",
       "type": "PaymentCreated",
       "data": {
         "id": "0ae1733e-7538-4908-b90a-5721670cb093",
+        "customerId": "abbb8aa3-87f9-4b2b-889f-8962cf708cfc",
         "amount": 100,
         "currency": "USD",
+        "gateway": "dinopay",
         "direction": "outbound",
-        "customerId": "2432318c-4ff3-4ac0-b734-9b61779e2e46",
         "status": "pending",
-        "beneficiary": {
-          "bankName": "dinopay",
-          "bankId": "dinopay",
-          "accountHolder": "Richard Roe",
-          "routingKey": "123456789123456",
-          "accountNumber": "1200079635"
+        "debtor": {
+          "institutionName": "dinopay",
+          "institutionId": "dinopay",
+          "currency": "ARS",
+          "accountDetails": {
+            "accountType": "dinopay",
+            "accountHolder": "Richard Roe",
+            "accountNumber": "1200079635"
+          }
         },
-        "createdAt": "2024-10-04T00:00:00Z"
+        "beneficiary": {
+          "institutionName": "dinopay",
+          "institutionId": "dinopay",
+          "currency": "ARS",
+          "accountDetails": {
+             "accountType": "dinopay",
+             "accountHolder": "Richard Roe",
+            "accountNumber": "1200079635"
+            }
+        }
       }
     }
     """

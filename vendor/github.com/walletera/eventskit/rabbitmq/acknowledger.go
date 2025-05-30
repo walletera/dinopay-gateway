@@ -20,6 +20,18 @@ func (a *Acknowledger) Ack() error {
 }
 
 func (a *Acknowledger) Nack(opts messages.NackOpts) error {
-    // TODO implement a way to limit the retries
-    return a.delivery.Nack(false, false)
+    if a.delivery.Headers == nil {
+        a.delivery.Headers = make(amqp091.Table)
+    }
+    var deliveryCount int
+    header, ok := a.delivery.Headers["w-delivery-count"]
+    if ok {
+        deliveryCount = header.(int)
+    }
+    var requeue bool
+    if opts.Requeue && deliveryCount < opts.MaxRetries {
+        requeue = true
+    }
+    a.delivery.Headers["w-delivery-count"] = deliveryCount + 1
+    return a.delivery.Nack(false, requeue)
 }

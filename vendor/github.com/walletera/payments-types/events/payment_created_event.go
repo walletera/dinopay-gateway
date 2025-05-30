@@ -7,9 +7,9 @@ import (
 
     "github.com/google/uuid"
     "github.com/walletera/eventskit/events"
-    "github.com/walletera/payments-types/api"
     "github.com/walletera/payments-types/pkg/wogen"
     "github.com/walletera/payments-types/pkg/wuuid"
+    api "github.com/walletera/payments-types/privateapi"
     "github.com/walletera/werrors"
 )
 

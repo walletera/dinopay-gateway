@@ -6,19 +6,19 @@ import (
     "log/slog"
     "time"
 
+    "github.com/EventStore/EventStore-Client-Go/v4/esdb"
     "github.com/walletera/dinopay-gateway/internal/adapters/dinopay"
     dinopayevents "github.com/walletera/dinopay-gateway/internal/domain/events/dinopay"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway/inbound"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway/outbound"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/payments"
     "github.com/walletera/dinopay-gateway/pkg/logattr"
-    "github.com/walletera/dinopay-gateway/pkg/paymentsauth"
     "github.com/walletera/eventskit/eventstoredb"
     "github.com/walletera/eventskit/messages"
     "github.com/walletera/eventskit/rabbitmq"
     "github.com/walletera/eventskit/webhook"
-    paymentsapi "github.com/walletera/payments-types/api"
     paymentsevents "github.com/walletera/payments-types/events"
+    paymentsapi "github.com/walletera/payments-types/privateapi"
     "github.com/walletera/werrors"
     "go.uber.org/zap"
     "go.uber.org/zap/exp/zapslog"
@@ -157,12 +157,25 @@ func newZapLogger() (*zap.Logger, error) {
 }
 
 func (app *App) execESDBSetupTasks(_ context.Context) error {
-    err := eventstoredb.CreatePersistentSubscription(app.esdbUrl, ESDB_ByCategoryProjection_OutboundPayment, ESDB_SubscriptionGroupName)
+    subscriptionSettings := esdb.SubscriptionSettingsDefault()
+    subscriptionSettings.ResolveLinkTos = true
+
+    err := eventstoredb.CreatePersistentSubscription(
+        app.esdbUrl,
+        ESDB_ByCategoryProjection_OutboundPayment,
+        ESDB_SubscriptionGroupName,
+        subscriptionSettings,
+    )
     if err != nil {
         return fmt.Errorf("failed creating persistent subscription for %s: %w", ESDB_ByCategoryProjection_OutboundPayment, err)
     }
 
-    err = eventstoredb.CreatePersistentSubscription(app.esdbUrl, ESDB_ByCategoryProjection_InboundPayment, ESDB_SubscriptionGroupName)
+    err = eventstoredb.CreatePersistentSubscription(
+        app.esdbUrl,
+        ESDB_ByCategoryProjection_InboundPayment,
+        ESDB_SubscriptionGroupName,
+        subscriptionSettings,
+    )
     if err != nil {
         return fmt.Errorf("failed creating persistent subscription for %s: %w", ESDB_ByCategoryProjection_InboundPayment, err)
     }
@@ -215,7 +228,7 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
 }
 
 func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[dinopayevents.EventsHandler], error) {
-    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl, paymentsauth.NewSecuritySource())
+    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl)
     if err != nil {
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
     }
@@ -240,7 +253,7 @@ func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
 
 func createGatewayInboundMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[inbound.EventsHandler], error) {
 
-    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl, paymentsauth.NewSecuritySource())
+    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl)
     if err != nil {
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
     }
@@ -269,7 +282,7 @@ func createGatewayInboundMessageProcessor(app *App, logger *slog.Logger) (*messa
 
 func createGatewayMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[outbound.EventsHandler], error) {
 
-    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl, paymentsauth.NewSecuritySource())
+    paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl)
     if err != nil {
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
     }

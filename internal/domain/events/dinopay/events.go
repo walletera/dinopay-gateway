@@ -18,7 +18,7 @@ type PaymentCreated struct {
 
 type PaymentData struct {
     Id                 uuid.UUID `json:"id"`
-    Amount             int       `json:"amount"`
+    Amount             float64   `json:"amount"`
     Currency           string    `json:"currency"`
     SourceAccount      Account   `json:"sourceAccount"`
     DestinationAccount Account   `json:"destinationAccount"`

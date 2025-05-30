@@ -32,7 +32,7 @@ Feature: process DinoPay webhook event PaymentCreated
     # the json below is a mockserver expectation
     """json
     {
-      "id": "postDepositSucceed",
+      "id": "postPaymentSucceed",
       "httpRequest" : {
         "method": "POST",
         "path": "/payments",
@@ -43,8 +43,27 @@ Feature: process DinoPay webhook event PaymentCreated
               "amount": 100,
               "currency": "USD",
               "customerId": "9fd3bc09-99da-4486-950a-11082f5fd966",
-              "externalId": "bb17667e-daac-41f6-ada3-2c22f24caf22"
+              "externalId": "bb17667e-daac-41f6-ada3-2c22f24caf22",
+              "direction": "inbound",
+              "status": "confirmed",
+              "gateway": "dinopay",
+              "debtor": {
+                "currency": "USD",
+                "accountDetails": {
+                  "accountType": "dinopay",
+                  "accountHolder": "john doe",
+                  "accountNumber": "IE12BOFI90000112345678"
+                }
               },
+              "beneficiary": {
+                "currency": "USD",
+                "accountDetails": {
+                    "accountType": "dinopay",
+                    "accountHolder": "jane doe",
+                    "accountNumber": "IE12BOFI90000112349876"
+                  }
+              }
+            },
             "matchType": "ONLY_MATCHING_FIELDS"
         }
       },
@@ -54,14 +73,32 @@ Feature: process DinoPay webhook event PaymentCreated
           "content-type" : [ "application/json" ]
         },
         "body": {
-            "id": "01937863-163a-790f-8e59-707e152dd9c7",
-            "amount": 100,
+          "id": "c33cd090-9c7a-4175-ad7c-cff28ed46d2a",
+          "amount": 100,
+          "currency": "USD",
+          "customerId": "9fd3bc09-99da-4486-950a-11082f5fd966",
+          "externalId": "bb17667e-daac-41f6-ada3-2c22f24caf22",
+          "direction": "inbound",
+          "status": "confirmed",
+          "gateway": "dinopay",
+          "debtor": {
             "currency": "USD",
-            "direction": "outbound",
-            "customerId": "9fd3bc09-99da-4486-950a-11082f5fd966",
-            "externalId": "bb17667e-daac-41f6-ada3-2c22f24caf22",
-            "status": "confirmed",
-            "createdAt": "2024-11-29T14:46:19Z"
+            "accountDetails": {
+              "accountType": "dinopay",
+              "accountHolder": "john doe",
+              "accountNumber": "IE12BOFI90000112345678"
+            }
+          },
+          "beneficiary": {
+            "currency": "USD",
+            "accountDetails": {
+                "accountType": "dinopay",
+                "accountHolder": "jane doe",
+                "accountNumber": "IE12BOFI90000112349876"
+              }
+          },
+          "createdAt": "2024-06-22T12:34:56Z",
+          "updatedAt": "2024-06-22T12:34:56Z"
         }
       },
       "priority" : 0,

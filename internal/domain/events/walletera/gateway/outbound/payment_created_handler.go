@@ -3,7 +3,7 @@ package outbound
 import (
     "context"
 
-    paymentsapi "github.com/walletera/payments-types/api"
+    paymentsapi "github.com/walletera/payments-types/privateapi"
     "github.com/walletera/werrors"
 )
 

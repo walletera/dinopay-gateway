@@ -43,6 +43,7 @@ func (mc *MessagesConsumer) Consume() (<-chan messages.Message, error) {
         esdb.SubscribeToPersistentSubscriptionOptions{},
     )
     if err != nil {
+        // FIXME return proper error
         panic(err)
     }
     messagesCh := make(chan messages.Message)

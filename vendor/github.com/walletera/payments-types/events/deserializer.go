@@ -7,7 +7,7 @@ import (
     "log/slog"
 
     "github.com/walletera/eventskit/events"
-    "github.com/walletera/payments-types/api"
+    "github.com/walletera/payments-types/privateapi"
 )
 
 // interface compliance verification
@@ -29,14 +29,14 @@ func (d *Deserializer) Deserialize(rawPayload []byte) (events.Event[Handler], er
     }
     switch event.Type {
     case PaymentCreatedType:
-        var payment api.Payment
+        var payment privateapi.Payment
         err := json.Unmarshal(event.Data, &payment)
         if err != nil {
             log.Printf("error deserializing PaymentCreated event data %s: %s", event.Data, err.Error())
         }
         return NewPaymentCreated(event.CorrelationID, payment), nil
     case PaymentUpdatedType:
-        var payment api.PaymentUpdate
+        var payment privateapi.PaymentUpdate
         err := json.Unmarshal(event.Data, &payment)
         if err != nil {
             log.Printf("error deserializing PaymentUpdated event data %s: %s", event.Data, err.Error())

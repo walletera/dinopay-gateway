@@ -33,19 +33,27 @@ func NewEventsHandler(dinopayClient dinopay.Client, esDB eventsourcing.DB, logge
 func (ev *EventsHandler) HandlePaymentCreated(ctx context.Context, paymentCreated paymentEvents.PaymentCreated) werrors.WError {
     walleteraPaymentId := paymentCreated.Data.ID
     logger := ev.logger.With(
+        logattr.CorrelationId(paymentCreated.CorrelationID()),
         logattr.EventType(paymentCreated.Type()),
         logattr.PaymentId(walleteraPaymentId.String()),
     )
+    logger.Debug("handling PaymentCreated event")
+    if !paymentCreated.Data.Debtor.AccountDetails.OneOf.IsDinopayAccountDetails() {
+        return werrors.NewValidationError("invalid debtor account details type: %s", paymentCreated.Data.Beneficiary.AccountDetails.OneOf.Type)
+    }
+    if !paymentCreated.Data.Beneficiary.AccountDetails.OneOf.IsDinopayAccountDetails() {
+        return werrors.NewValidationError("invalid beneficiary account details type: %s", paymentCreated.Data.Beneficiary.AccountDetails.OneOf.Type)
+    }
     dinopayResp, err := ev.dinopayClient.CreatePayment(ctx, &dinopayapi.Payment{
         Amount:   paymentCreated.Data.Amount,
-        Currency: paymentCreated.Data.Currency,
+        Currency: string(paymentCreated.Data.Currency),
         SourceAccount: dinopayapi.Account{
-            AccountHolder: "hardcodedSourceAccountHolder",
-            AccountNumber: "hardcodedSourceAccountNumber",
+            AccountHolder: paymentCreated.Data.Debtor.AccountDetails.OneOf.DinopayAccountDetails.AccountHolder,
+            AccountNumber: paymentCreated.Data.Debtor.AccountDetails.OneOf.DinopayAccountDetails.AccountHolder,
         },
         DestinationAccount: dinopayapi.Account{
-            AccountHolder: paymentCreated.Data.Beneficiary.Value.AccountHolder.Value,
-            AccountNumber: paymentCreated.Data.Beneficiary.Value.AccountNumber.Value,
+            AccountHolder: paymentCreated.Data.Beneficiary.AccountDetails.OneOf.DinopayAccountDetails.AccountHolder,
+            AccountNumber: paymentCreated.Data.Beneficiary.AccountDetails.OneOf.DinopayAccountDetails.AccountNumber,
         },
         CustomerTransactionId: dinopayapi.OptString{
             Value: walleteraPaymentId.String(),
@@ -80,15 +88,15 @@ func (ev *EventsHandler) HandlePaymentCreated(ctx context.Context, paymentCreate
 
     streamName := outbound.BuildOutboundPaymentStreamName(dinopayPayment.ID.Value.String())
 
-    werr := ev.esDB.AppendEvents(
+    appendEventsErr := ev.esDB.AppendEvents(
         ctx,
         streamName,
         eventsourcing.ExpectedAggregateVersion{IsNew: true},
         outboundPaymentCreated,
     )
-    if err != nil {
+    if appendEventsErr != nil {
         werr := werrors.NewWrappedError(
-            werr,
+            appendEventsErr,
             "failed handling outbound PaymentCreated event",
             streamName,
         )

@@ -6,6 +6,7 @@ import (
 
 type NackOpts struct {
     Requeue      bool
+    MaxRetries   int
     ErrorCode    werrors.ErrorCode
     ErrorMessage string
 }

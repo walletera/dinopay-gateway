@@ -8,20 +8,11 @@ import (
     "github.com/EventStore/EventStore-Client-Go/v4/esdb"
 )
 
-func CreatePersistentSubscription(connectionString string, streamName string, groupName string) error {
-    settings, err := esdb.ParseConnectionString(connectionString)
+func CreatePersistentSubscription(connectionString string, streamName string, groupName string, subscriptionSettings esdb.PersistentSubscriptionSettings) error {
+    esdbClient, err := GetESDBClient(connectionString)
     if err != nil {
         return err
     }
-
-    esdbClient, err := esdb.NewClient(settings)
-    if err != nil {
-        return err
-    }
-
-    subscriptionSettings := esdb.SubscriptionSettingsDefault()
-    subscriptionSettings.ResolveLinkTos = true
-    subscriptionSettings.MaxRetryCount = 3
 
     err = esdbClient.CreatePersistentSubscription(
         context.Background(),

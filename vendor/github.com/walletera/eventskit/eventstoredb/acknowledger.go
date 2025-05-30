@@ -5,9 +5,6 @@ import (
     "github.com/walletera/eventskit/messages"
 )
 
-// TODO make this configurable
-const maxRetry = 3
-
 type Acknowledger struct {
     persistentSubscription *esdb.PersistentSubscription
     eventAppeared          *esdb.EventAppeared
@@ -23,7 +20,7 @@ func (a *Acknowledger) Ack() error {
 
 func (a *Acknowledger) Nack(opts messages.NackOpts) error {
     var err error
-    if opts.Requeue && a.eventAppeared.RetryCount <= maxRetry {
+    if opts.Requeue {
         err = a.persistentSubscription.Nack(opts.ErrorMessage, esdb.NackActionRetry, a.eventAppeared.Event)
     } else {
         err = a.persistentSubscription.Nack(opts.ErrorMessage, esdb.NackActionPark, a.eventAppeared.Event)

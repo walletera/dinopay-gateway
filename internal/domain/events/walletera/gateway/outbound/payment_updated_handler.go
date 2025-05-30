@@ -5,7 +5,7 @@ import (
     "fmt"
 
     "github.com/walletera/eventskit/eventsourcing"
-    paymentsApi "github.com/walletera/payments-types/api"
+    paymentsApi "github.com/walletera/payments-types/privateapi"
     "github.com/walletera/werrors"
 )
 

@@ -11,7 +11,7 @@ import (
     "github.com/walletera/dinopay-gateway/pkg/logattr"
     "github.com/walletera/dinopay-gateway/pkg/wuuid"
     "github.com/walletera/eventskit/eventsourcing"
-    paymentsapi "github.com/walletera/payments-types/api"
+    paymentsapi "github.com/walletera/payments-types/privateapi"
     "github.com/walletera/werrors"
 )
 
@@ -34,6 +34,7 @@ func NewEventsHandlerImpl(db eventsourcing.DB, paymentsApiClient *paymentsapi.Cl
 }
 
 func (ev EventsHandlerImpl) HandlePaymentCreated(ctx context.Context, event PaymentCreated) werrors.WError {
+    // TODO get correlation id from PaymentCreated and copy into PaymentReceived
     eventUUID := wuuid.NewUUID()
     depositUUID := wuuid.NewUUID()
     // TODO get from customer repository
