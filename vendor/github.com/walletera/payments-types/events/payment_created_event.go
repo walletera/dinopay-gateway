@@ -4,11 +4,11 @@ import (
     "context"
     "encoding/json"
     "fmt"
+    "time"
 
     "github.com/google/uuid"
     "github.com/walletera/eventskit/events"
     "github.com/walletera/payments-types/pkg/wogen"
-    "github.com/walletera/payments-types/pkg/wuuid"
     api "github.com/walletera/payments-types/privateapi"
     "github.com/walletera/werrors"
 )
@@ -20,44 +20,64 @@ const (
 )
 
 type PaymentCreated struct {
-    Id                 uuid.UUID      `json:"id"`
-    EventType          string         `json:"type"`
-    EventCorrelationID string         `json:"correlationId"`
-    SerializableData   json.Marshaler `json:"data"`
+    Id                    uuid.UUID `json:"id"`
+    EventType             string    `json:"type"`
+    EventAggregateVersion uint64    `json:"aggregateVersion"`
+    EventCorrelationId    string    `json:"eventCorrelationId"`
+    EventCreatedAt        time.Time `json:"createdAt"`
 
-    Data api.Payment `json:"-"`
+    SerializableData json.Marshaler `json:"data"`
+    Data             api.Payment    `json:"-"`
 }
 
 func NewPaymentCreated(correlationId string, data api.Payment) PaymentCreated {
     return PaymentCreated{
-        Id:                 wuuid.NewUUID(),
-        EventType:          PaymentCreatedType,
-        EventCorrelationID: correlationId,
-        Data:               data,
-        SerializableData:   wogen.NewSerializationWrapper(&data),
+        Id:                    uuid.New(),
+        EventType:             PaymentCreatedType,
+        EventAggregateVersion: 0,
+        EventCorrelationId:    correlationId,
+        EventCreatedAt:        time.Now(),
+        SerializableData:      wogen.NewSerializationWrapper(&data),
+        Data:                  data,
     }
 }
 
-func (w PaymentCreated) Accept(ctx context.Context, handler Handler) werrors.WError {
-    return handler.HandlePaymentCreated(ctx, w)
+func PaymentCreatedFromEnvelope(eventEnvelope events.EventEnvelope, data api.Payment) PaymentCreated {
+    return PaymentCreated{
+        Id:                    eventEnvelope.Id,
+        EventType:             eventEnvelope.Type,
+        EventAggregateVersion: eventEnvelope.AggregateVersion,
+        EventCorrelationId:    eventEnvelope.CorrelationId,
+        EventCreatedAt:        eventEnvelope.CreatedAt,
+        SerializableData:      wogen.NewSerializationWrapper(&data),
+        Data:                  data,
+    }
 }
 
-func (w PaymentCreated) ID() string {
-    return fmt.Sprintf("%s-%s", w.Type(), w.Id)
+func (p PaymentCreated) Accept(ctx context.Context, handler Handler) werrors.WError {
+    return handler.HandlePaymentCreated(ctx, p)
 }
 
-func (w PaymentCreated) Type() string {
+func (p PaymentCreated) ID() string {
+    return fmt.Sprintf("%s-%s", p.Type(), p.Id)
+}
+
+func (p PaymentCreated) AggregateVersion() uint64 { return p.EventAggregateVersion }
+
+func (p PaymentCreated) Type() string {
     return PaymentCreatedType
 }
 
-func (w PaymentCreated) CorrelationID() string {
-    return w.EventCorrelationID
+func (p PaymentCreated) CorrelationID() string {
+    return p.EventCorrelationId
 }
 
-func (w PaymentCreated) DataContentType() string {
+func (p PaymentCreated) DataContentType() string {
     return "application/json"
 }
 
-func (w PaymentCreated) Serialize() ([]byte, error) {
-    return json.Marshal(w)
+func (p PaymentCreated) CreatedAt() time.Time { return p.EventCreatedAt }
+
+func (p PaymentCreated) Serialize() ([]byte, error) {
+    return json.Marshal(p)
 }

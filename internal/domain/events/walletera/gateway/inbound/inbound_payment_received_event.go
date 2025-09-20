@@ -23,9 +23,8 @@ type PaymentReceived struct {
     Currency           string    `json:"currency"`
     SourceAccount      Account   `json:"sourceAccount"`
     DestinationAccount Account   `json:"destinationAccount"`
-    CreatedAt          time.Time `json:"createdAt,omitempty"`
+    EventCreatedAt     time.Time `json:"eventCreatedAt,omitempty"`
 }
-
 type Account struct {
     AccountHolder string `json:"accountHolder"`
     AccountNumber string `json:"accountNumber"`
@@ -45,6 +44,14 @@ func (i PaymentReceived) DataContentType() string {
 
 func (i PaymentReceived) CorrelationID() string {
     panic("not implemented yet")
+}
+
+func (i PaymentReceived) AggregateVersion() uint64 {
+    return 0
+}
+
+func (i PaymentReceived) CreatedAt() time.Time {
+    return i.EventCreatedAt
 }
 
 func (i PaymentReceived) Accept(ctx context.Context, handler EventsHandler) werrors.WError {

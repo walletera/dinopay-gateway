@@ -10,6 +10,7 @@ type CVUAccountBuilder struct {
     InstitutionId   privateapi.OptString
     cvu             string
     alias           string
+    cuit            privateapi.OptString
 }
 
 func NewCVUAccountBuilder() *CVUAccountBuilder {
@@ -33,6 +34,11 @@ func (b *CVUAccountBuilder) WithCVU(cvu string) *CVUAccountBuilder {
 
 func (b *CVUAccountBuilder) WithAlias(alias string) *CVUAccountBuilder {
     b.alias = alias
+    return b
+}
+
+func (b *CVUAccountBuilder) WithCUIT(cuit string) *CVUAccountBuilder {
+    b.cuit = privateapi.NewOptString(cuit)
     return b
 }
 
@@ -73,6 +79,7 @@ func (b *CVUAccountBuilder) Build() (privateapi.Account, werrors.WError) {
     } else {
         return privateapi.Account{}, werrors.NewNonRetryableInternalError("either cvu or alias must be set in a cvu account")
     }
+    accountDetails.OneOf.CvuAccountDetails.Cuit = b.cuit
     return privateapi.Account{
         InstitutionName: b.InstitutionName,
         InstitutionId:   b.InstitutionId,

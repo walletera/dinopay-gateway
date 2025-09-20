@@ -4,6 +4,7 @@ import (
     "context"
     "encoding/json"
     "fmt"
+    "time"
 
     "github.com/google/uuid"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway"
@@ -14,11 +15,11 @@ import (
 var _ events.Event[EventsHandler] = PaymentCreated{}
 
 type PaymentCreated struct {
-    Id               uuid.UUID `json:"id,omitempty"`
-    PaymentId        uuid.UUID `json:"withdrawal_id,omitempty"`
-    DinopayPaymentId uuid.UUID `json:"dinopay_payment_id,omitempty"`
+    Id                   uuid.UUID `json:"id,omitempty"`
+    PaymentId            uuid.UUID `json:"withdrawal_id,omitempty"`
+    DinopayPaymentId     uuid.UUID `json:"dinopay_payment_id,omitempty"`
     DinopayPaymentStatus string    `json:"dinopay_payment_status,omitempty"`
-    CreatedAt            int64     `json:"created_at,omitempty"`
+    PaymentCreatedAt     int64     `json:"created_at,omitempty"`
 }
 
 func (o PaymentCreated) ID() string {
@@ -35,6 +36,14 @@ func (o PaymentCreated) DataContentType() string {
 
 func (o PaymentCreated) CorrelationID() string {
     panic("not implemented yet")
+}
+
+func (o PaymentCreated) AggregateVersion() uint64 {
+    return 0
+}
+
+func (o PaymentCreated) CreatedAt() time.Time {
+    return time.UnixMilli(o.PaymentCreatedAt)
 }
 
 func (o PaymentCreated) Accept(ctx context.Context, handler EventsHandler) werrors.WError {

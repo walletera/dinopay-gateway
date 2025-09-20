@@ -55,10 +55,10 @@ func (ev EventsHandlerImpl) HandlePaymentCreated(ctx context.Context, event Paym
             AccountHolder: event.Data.DestinationAccount.AccountHolder,
             AccountNumber: event.Data.DestinationAccount.AccountNumber,
         },
-        CreatedAt: time.Now(),
+        EventCreatedAt: time.Now(),
     }
     streamName := gatewayevents.BuildInboundPaymentStreamName(inboundPaymentReceived.DinopayPaymentId.String())
-    werr := ev.db.AppendEvents(ctx, streamName, eventsourcing.ExpectedAggregateVersion{IsNew: true}, inboundPaymentReceived)
+    _, werr := ev.db.AppendEvents(ctx, streamName, eventsourcing.ExpectedAggregateVersion{IsNew: true}, inboundPaymentReceived)
     if werr != nil {
         ev.logger.Error("error handling dinopay PaymentCreated event", logattr.Error(werr.Error()))
         return werrors.NewWrappedError(werr)

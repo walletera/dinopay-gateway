@@ -3,7 +3,6 @@ package events
 import (
     "encoding/json"
     "fmt"
-    "log"
     "log/slog"
 
     "github.com/walletera/eventskit/events"
@@ -22,28 +21,28 @@ func NewDeserializer(logger *slog.Logger) *Deserializer {
 }
 
 func (d *Deserializer) Deserialize(rawPayload []byte) (events.Event[Handler], error) {
-    var event events.EventEnvelope
-    err := json.Unmarshal(rawPayload, &event)
+    var eventEnvelope events.EventEnvelope
+    err := json.Unmarshal(rawPayload, &eventEnvelope)
     if err != nil {
         return nil, fmt.Errorf("error deserializing message with payload %s: %w", rawPayload, err)
     }
-    switch event.Type {
+    switch eventEnvelope.Type {
     case PaymentCreatedType:
         var payment privateapi.Payment
-        err := json.Unmarshal(event.Data, &payment)
+        err := json.Unmarshal(eventEnvelope.Data, &payment)
         if err != nil {
-            log.Printf("error deserializing PaymentCreated event data %s: %s", event.Data, err.Error())
+            return nil, fmt.Errorf("error deserializing PaymentCreated eventEnvelope data %s: %s", eventEnvelope.Data, err.Error())
         }
-        return NewPaymentCreated(event.CorrelationID, payment), nil
+        return PaymentCreatedFromEnvelope(eventEnvelope, payment), nil
     case PaymentUpdatedType:
         var payment privateapi.PaymentUpdate
-        err := json.Unmarshal(event.Data, &payment)
+        err := json.Unmarshal(eventEnvelope.Data, &payment)
         if err != nil {
-            log.Printf("error deserializing PaymentUpdated event data %s: %s", event.Data, err.Error())
+            return nil, fmt.Errorf("error deserializing PaymentUpdated eventEnvelope data %s: %s", eventEnvelope.Data, err.Error())
         }
-        return NewPaymentUpdated(event.CorrelationID, payment), nil
+        return PaymentUpdatedFromEnvelope(eventEnvelope, payment), nil
     default:
-        d.logger.Warn("unexpected event type", slog.String("eventType", event.Type))
+        d.logger.Warn("unexpected eventEnvelope type", slog.String("eventType", eventEnvelope.Type))
         return nil, nil
     }
 }

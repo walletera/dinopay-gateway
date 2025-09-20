@@ -3,6 +3,7 @@ package slog
 import (
     "log/slog"
 
+    "github.com/walletera/logs-watcher"
     "github.com/walletera/logs-watcher/newline"
 )
 
@@ -12,6 +13,9 @@ type Watcher struct {
     *newline.Watcher
     decoratedHandler slog.Handler
 }
+
+// _ is a compile-time check ensuring that Watcher implements the logs.IWatcher interface.
+var _ logs.IWatcher = (*Watcher)(nil)
 
 func NewWatcher(handler slog.Handler) *Watcher {
     watcher := newline.NewWatcher()

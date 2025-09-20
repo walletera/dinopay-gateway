@@ -88,7 +88,7 @@ func (ev *EventsHandler) HandlePaymentCreated(ctx context.Context, paymentCreate
 
     streamName := outbound.BuildOutboundPaymentStreamName(dinopayPayment.ID.Value.String())
 
-    appendEventsErr := ev.esDB.AppendEvents(
+    _, appendEventsErr := ev.esDB.AppendEvents(
         ctx,
         streamName,
         eventsourcing.ExpectedAggregateVersion{IsNew: true},
@@ -97,7 +97,7 @@ func (ev *EventsHandler) HandlePaymentCreated(ctx context.Context, paymentCreate
     if appendEventsErr != nil {
         werr := werrors.NewWrappedError(
             appendEventsErr,
-            "failed handling outbound PaymentCreated event",
+            "failed appending outbound PaymentCreated event",
             streamName,
         )
         logger.Error(werr.Error())

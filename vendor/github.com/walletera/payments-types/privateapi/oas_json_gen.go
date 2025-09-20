@@ -779,16 +779,6 @@ func (s CvuAccountDetailsRoutingInfoSum) Encode(e *jx.Encoder) {
 
 func (s CvuAccountDetailsRoutingInfoSum) encodeFields(e *jx.Encoder) {
 	switch s.Type {
-	case AliasCvuRoutingInfoCvuAccountDetailsRoutingInfoSum:
-		e.FieldStart("cvuRoutingInfoType")
-		e.Str("alias")
-		{
-			s := s.AliasCvuRoutingInfo
-			{
-				e.FieldStart("alias")
-				e.Str(s.Alias)
-			}
-		}
 	case CvuCvuRoutingInfoCvuAccountDetailsRoutingInfoSum:
 		e.FieldStart("cvuRoutingInfoType")
 		e.Str("cvu")
@@ -797,6 +787,16 @@ func (s CvuAccountDetailsRoutingInfoSum) encodeFields(e *jx.Encoder) {
 			{
 				e.FieldStart("cvu")
 				e.Str(s.Cvu)
+			}
+		}
+	case AliasCvuRoutingInfoCvuAccountDetailsRoutingInfoSum:
+		e.FieldStart("cvuRoutingInfoType")
+		e.Str("alias")
+		{
+			s := s.AliasCvuRoutingInfo
+			{
+				e.FieldStart("alias")
+				e.Str(s.Alias)
 			}
 		}
 	}
@@ -825,11 +825,11 @@ func (s *CvuAccountDetailsRoutingInfoSum) Decode(d *jx.Decoder) error {
 					return err
 				}
 				switch typ {
-				case "alias":
-					s.Type = AliasCvuRoutingInfoCvuAccountDetailsRoutingInfoSum
-					found = true
 				case "cvu":
 					s.Type = CvuCvuRoutingInfoCvuAccountDetailsRoutingInfoSum
+					found = true
+				case "alias":
+					s.Type = AliasCvuRoutingInfoCvuAccountDetailsRoutingInfoSum
 					found = true
 				default:
 					return errors.Errorf("unknown type %s", typ)

@@ -25,12 +25,12 @@ func NewDB(client *esdb.Client) *DB {
     }
 }
 
-func (db *DB) AppendEvents(ctx context.Context, streamName string, expectedAggregateVersion eventsourcing.ExpectedAggregateVersion, events ...events.EventData) werrors.WError {
+func (db *DB) AppendEvents(ctx context.Context, streamName string, expectedAggregateVersion eventsourcing.ExpectedAggregateVersion, events ...events.EventData) (uint64, werrors.WError) {
     var eventsData []esdb.EventData
     for _, event := range events {
         data, err := event.Serialize()
         if err != nil {
-            return werrors.NewNonRetryableInternalError(err.Error())
+            return 0, werrors.NewNonRetryableInternalError(err.Error())
         }
         eventData := esdb.EventData{
             ContentType: esdb.ContentTypeJson,
@@ -51,11 +51,11 @@ func (db *DB) AppendEvents(ctx context.Context, streamName string, expectedAggre
         Deadline:         nil,
         RequiresLeader:   false,
     }
-    _, err := db.client.AppendToStream(ctx, streamName, opts, eventsData...)
+    writeResult, err := db.client.AppendToStream(ctx, streamName, opts, eventsData...)
     if err != nil {
-        return mapAppendErrorToWalleteraError(err, expectedAggregateVersion)
+        return 0, mapAppendErrorToWalleteraError(err, expectedAggregateVersion)
     }
-    return nil
+    return writeResult.NextExpectedVersion, nil
 }
 
 func (db *DB) ReadEvents(ctx context.Context, streamName string) ([]eventsourcing.RetrievedEvent, werrors.WError) {

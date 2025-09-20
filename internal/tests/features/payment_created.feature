@@ -12,7 +12,7 @@ Feature: process PaymentCreated event
     Given a PaymentCreated event:
     """json
     {
-      "id": "0fg1833e-3438-4908-b90a-5721670cb067",
+      "id": "b662af14-533e-4d0c-896d-63f92e484126",
       "type": "PaymentCreated",
       "data": {
         "id": "0ae1733e-7538-4908-b90a-5721670cb093",
@@ -41,8 +41,11 @@ Feature: process PaymentCreated event
              "accountHolder": "Richard Roe",
             "accountNumber": "1200079635"
             }
-        }
-      }
+        },
+        "updatedAt": "2024-06-27T15:45:00Z",
+        "createdAt": "2024-06-27T15:45:00Z"
+      },
+      "createdAt": "2024-06-27T15:45:00Z"
     }
     """
     And  a dinopay endpoint to create payments:
@@ -147,7 +150,7 @@ Feature: process PaymentCreated event
     Given a PaymentCreated event:
     """json
 {
-      "id": "0fg1833e-3438-4908-b90a-5721670cb067",
+      "id": "eefe8e76-58eb-4a3e-bf05-c7f703ddc220",
       "type": "PaymentCreated",
       "data": {
         "id": "0ae1733e-7538-4908-b90a-5721670cb093",
@@ -176,8 +179,11 @@ Feature: process PaymentCreated event
              "accountHolder": "Richard Roe",
             "accountNumber": "1200079635"
             }
-        }
-      }
+        },
+      "updatedAt": "2024-06-27T15:45:00Z",
+      "createdAt": "2024-06-27T15:45:00Z"
+      },
+      "createdAt": "2024-06-27T15:45:00Z"
     }
     """
     And  a dinopay endpoint to create payments:

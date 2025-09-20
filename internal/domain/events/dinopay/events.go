@@ -29,27 +29,35 @@ type Account struct {
     AccountNumber string `json:"accountNumber"`
 }
 
-func (p PaymentCreated) ID() string {
-    return p.Id.String()
+func (pc PaymentCreated) ID() string {
+    return pc.Id.String()
 }
 
-func (p PaymentCreated) Type() string {
-    return p.EventType
+func (pc PaymentCreated) Type() string {
+    return pc.EventType
 }
 
-func (p PaymentCreated) CorrelationID() string {
+func (pc PaymentCreated) CorrelationID() string {
     //TODO implement me
     panic("implement me")
 }
 
-func (p PaymentCreated) DataContentType() string {
+func (pc PaymentCreated) DataContentType() string {
     return "application/json"
 }
 
-func (p PaymentCreated) Serialize() ([]byte, error) {
-    return json.Marshal(p)
+func (pc PaymentCreated) AggregateVersion() uint64 {
+    return 0
 }
 
-func (p PaymentCreated) Accept(ctx context.Context, handler EventsHandler) werrors.WError {
-    return handler.HandlePaymentCreated(ctx, p)
+func (pc PaymentCreated) CreatedAt() time.Time {
+    return pc.Time
+}
+
+func (pc PaymentCreated) Serialize() ([]byte, error) {
+    return json.Marshal(pc)
+}
+
+func (pc PaymentCreated) Accept(ctx context.Context, handler EventsHandler) werrors.WError {
+    return handler.HandlePaymentCreated(ctx, pc)
 }
