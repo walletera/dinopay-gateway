@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: write
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+
+      - name: Test
+        run: make test_all
+
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ----------------------------
+      # 1. Checkout repository
+      # ----------------------------
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # required so we can read git tags
+
+      # ----------------------------
+      # 2. Calculate next version
+      # ----------------------------
+      - name: Calculate next release version
+        id: version
+        run: |
+          # get latest tag (format vX.Y.Z). if none, start at v0.0.0
+          latest_tag=$(git describe --tags --match "v*" --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: $latest_tag"
+          
+          # strip 'v' and split into components
+          version=${latest_tag#v}
+          major=$(echo "$version" | cut -d. -f1)
+          minor=$(echo "$version" | cut -d. -f2)
+          patch=$(echo "$version" | cut -d. -f3)
+          
+          # bump patch version (you can customize)
+          patch=$((patch + 1))
+          next="v$major.$minor.$patch"
+          
+          echo "Next version: $next"
+          echo "next_version=$next" >> $GITHUB_OUTPUT
+
+      # ----------------------------
+      # 3. Create GitHub release
+      # ----------------------------
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.version.outputs.next_version }}
+          name: Release ${{ steps.version.outputs.next_version }}
+          skipIfReleaseExists: true
+          body: |
+            Automated release created by CI.
+            Docker image pushed to Docker Hub:
+            - `${{ secrets.DOCKERHUB_USERNAME }}/dinopay-gateway:${{ steps.version.outputs.next_version }}`
+
+      # ----------------------------
+      # 4. Log in to Docker Hub
+      # ----------------------------
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # ----------------------------
+      # 5. Build and push Docker image
+      # ----------------------------
+      - name: Build & push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/dinopay-gateway:${{ steps.version.outputs.next_version }}
+
+    needs:
+      - test
