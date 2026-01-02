@@ -1,0 +1,36 @@
+{
+  "id": "b662af14-533e-4d0c-896d-63f92e484126",
+  "type": "PaymentCreated",
+  "data": {
+    "id": "0ae1733e-7538-4908-b90a-5721670cb093",
+    "customerId": "abbb8aa3-87f9-4b2b-889f-8962cf708cfc",
+    "amount": 100,
+    "currency": "USD",
+    "gateway": "dinopay",
+    "direction": "outbound",
+    "status": "pending",
+    "debtor": {
+      "institutionName": "dinopay",
+      "institutionId": "dinopay",
+      "currency": "ARS",
+      "accountDetails": {
+        "accountType": "dinopay",
+        "accountHolder": "Richard Roe",
+        "accountNumber": "1200079635"
+      }
+    },
+    "beneficiary": {
+      "institutionName": "dinopay",
+      "institutionId": "dinopay",
+      "currency": "ARS",
+      "accountDetails": {
+        "accountType": "dinopay",
+        "accountHolder": "Richard Roe",
+        "accountNumber": "1200079635"
+      }
+    },
+    "updatedAt": "2024-06-27T15:45:00Z",
+    "createdAt": "2024-06-27T15:45:00Z"
+  },
+  "createdAt": "2024-06-27T15:45:00Z"
+}

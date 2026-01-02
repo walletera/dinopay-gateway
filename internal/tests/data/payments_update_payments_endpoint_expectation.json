@@ -1,0 +1,28 @@
+{
+  "id": "updatePaymentSucceed",
+  "httpRequest" : {
+    "method": "PATCH",
+    "path": "/payments/0ae1733e-7538-4908-b90a-5721670cb093",
+    "body": {
+      "type": "JSON",
+      "json": {
+        "externalId": "bb17667e-daac-41f6-ada3-2c22f24caf22",
+        "status": "pending"
+      },
+      "matchType": "ONLY_MATCHING_FIELDS"
+    }
+  },
+  "httpResponse" : {
+    "statusCode" : 200,
+    "headers" : {
+      "content-type" : [ "application/json" ]
+    }
+  },
+  "priority" : 0,
+  "timeToLive" : {
+    "unlimited" : true
+  },
+  "times" : {
+    "unlimited" : true
+  }
+}

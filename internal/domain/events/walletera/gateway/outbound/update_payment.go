@@ -27,7 +27,7 @@ func updatePaymentStatus(ctx context.Context, client *paymentsapi.Client, paymen
         })
     if patchPaymentErr != nil {
         // TODO handle error
-        return werrors.NewRetryableInternalError("failed updating withdrawal in payments service: %w", err)
+        return werrors.NewRetryableInternalError("failed updating payment in payments service: %s", patchPaymentErr.Error())
     }
     return nil
 }

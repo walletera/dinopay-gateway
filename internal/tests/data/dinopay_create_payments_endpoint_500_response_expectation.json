@@ -1,0 +1,34 @@
+{
+  "id": "createPaymentFail",
+  "httpRequest" : {
+    "method": "POST",
+    "path" : "/payments",
+    "body": {
+      "type": "JSON",
+      "json": {
+        "customerTransactionId": "0ae1733e-7538-4908-b90a-5721670cb093",
+        "amount": 100,
+        "currency": "USD",
+        "destinationAccount": {
+          "accountHolder": "Richard Roe",
+          "accountNumber": "1200079635"
+        }
+      },
+      "matchType": "ONLY_MATCHING_FIELDS"
+    }
+  },
+  "httpResponse" : {
+    "statusCode" : 500,
+    "headers" : {
+      "content-type" : [ "text/html" ]
+    },
+    "body" : "something bad happened"
+  },
+  "priority" : 0,
+  "timeToLive" : {
+    "unlimited" : true
+  },
+  "times" : {
+    "unlimited" : true
+  }
+}

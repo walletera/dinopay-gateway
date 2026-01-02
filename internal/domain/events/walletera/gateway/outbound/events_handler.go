@@ -37,7 +37,7 @@ func (ev *EventsHandlerImpl) HandleOutboundPaymentCreated(ctx context.Context, o
     err := NewOutboundPaymentCreatedHandler(ev.paymentsClient).Handle(ctx, outboundPaymentCreated)
     if err != nil {
         ev.logger.Error(
-            err.Error(),
+            err.Message(),
             logattr.EventType(outboundPaymentCreated.Type()),
             logattr.PaymentId(outboundPaymentCreated.PaymentId.String()))
         return werrors.NewWrappedError(err, "failed handling outbound PaymentCreated event")

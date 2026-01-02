@@ -1,0 +1,50 @@
+{
+  "id": "createPaymentSucceed",
+  "httpRequest" : {
+    "method": "POST",
+    "path" : "/payments",
+    "body": {
+      "type": "JSON",
+      "json": {
+        "customerTransactionId": "0ae1733e-7538-4908-b90a-5721670cb093",
+        "amount": 100,
+        "currency": "USD",
+        "destinationAccount": {
+          "accountHolder": "Richard Roe",
+          "accountNumber": "1200079635"
+        }
+      },
+      "matchType": "ONLY_MATCHING_FIELDS"
+    }
+  },
+  "httpResponse" : {
+    "statusCode" : 201,
+    "headers" : {
+      "content-type" : [ "application/json" ]
+    },
+    "body" : {
+      "id" : "bb17667e-daac-41f6-ada3-2c22f24caf22",
+      "amount" : 100,
+      "currency" : "USD",
+      "sourceAccount" : {
+        "accountHolder" : "john doe",
+        "accountNumber" : "IE12BOFI90000112345678"
+      },
+      "destinationAccount" : {
+        "accountHolder" : "jane doe",
+        "accountNumber" : "IE12BOFI90000112349876"
+      },
+      "status" : "pending",
+      "customerTransactionId" : "9713ec22-cf8d-4a21-affb-719db00d7388",
+      "createdAt" : "2023-07-07",
+      "updatedAt" : "2023-07-07"
+    }
+  },
+  "priority" : 0,
+  "timeToLive" : {
+    "unlimited" : true
+  },
+  "times" : {
+    "unlimited" : true
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "id": "postPaymentSucceed",
+  "httpRequest" : {
+    "method": "POST",
+    "path": "/payments",
+    "body": {
+      "type": "JSON",
+      "json": {
+        "id": "${json-unit.any-string}",
+        "amount": 100,
+        "currency": "USD",
+        "customerId": "9fd3bc09-99da-4486-950a-11082f5fd966",
+        "externalId": "bb17667e-daac-41f6-ada3-2c22f24caf22",
+        "direction": "inbound",
+        "status": "confirmed",
+        "gateway": "dinopay",
+        "debtor": {
+          "currency": "USD",
+          "accountDetails": {
+            "accountType": "dinopay",
+            "accountHolder": "john doe",
+            "accountNumber": "IE12BOFI90000112345678"
+          }
+        },
+        "beneficiary": {
+          "currency": "USD",
+          "accountDetails": {
+            "accountType": "dinopay",
+            "accountHolder": "jane doe",
+            "accountNumber": "IE12BOFI90000112349876"
+          }
+        }
+      },
+      "matchType": "ONLY_MATCHING_FIELDS"
+    }
+  },
+  "httpResponse" : {
+    "statusCode" : 201,
+    "headers" : {
+      "content-type" : [ "application/json" ]
+    },
+    "body": {
+      "id": "c33cd090-9c7a-4175-ad7c-cff28ed46d2a",
+      "amount": 100,
+      "currency": "USD",
+      "customerId": "9fd3bc09-99da-4486-950a-11082f5fd966",
+      "externalId": "bb17667e-daac-41f6-ada3-2c22f24caf22",
+      "direction": "inbound",
+      "status": "confirmed",
+      "gateway": "dinopay",
+      "debtor": {
+        "currency": "USD",
+        "accountDetails": {
+          "accountType": "dinopay",
+          "accountHolder": "john doe",
+          "accountNumber": "IE12BOFI90000112345678"
+        }
+      },
+      "beneficiary": {
+        "currency": "USD",
+        "accountDetails": {
+          "accountType": "dinopay",
+          "accountHolder": "jane doe",
+          "accountNumber": "IE12BOFI90000112349876"
+        }
+      },
+      "createdAt": "2024-06-22T12:34:56Z",
+      "updatedAt": "2024-06-22T12:34:56Z"
+    }
+  },
+  "priority" : 0,
+  "timeToLive" : {
+    "unlimited" : true
+  },
+  "times" : {
+    "unlimited" : true
+  }
+}

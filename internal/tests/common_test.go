@@ -7,6 +7,7 @@ import (
     "log/slog"
     "net/http"
     "net/url"
+    "os"
     "time"
 
     "github.com/EventStore/EventStore-Client-Go/v4/esdb"
@@ -153,12 +154,8 @@ func theDinopayGatewayProducesTheFollowingLog(ctx context.Context, logMsg string
     return ctx, nil
 }
 
-func createMockServerExpectation(ctx context.Context, mockserverExpectation *godog.DocString, ctxKey string) (context.Context, error) {
-    if mockserverExpectation == nil || len(mockserverExpectation.Content) == 0 {
-        return nil, fmt.Errorf("the mockserver expectation is empty or was not defined")
-    }
-
-    rawMockserverExpectation := []byte(mockserverExpectation.Content)
+func createMockServerExpectation(ctx context.Context, mockserverExpectationFilePath *godog.DocString, ctxKey string) (context.Context, error) {
+    rawMockserverExpectation := readFile(mockserverExpectationFilePath)
 
     var unmarshalledExpectation MockServerExpectation
     err := json.Unmarshal(rawMockserverExpectation, &unmarshalledExpectation)
@@ -232,6 +229,19 @@ func verifyExpectationMet(ctx context.Context, expectationID string) error {
         return verificationErr
     }
     return nil
+}
+
+func readFile(path *godog.DocString) []byte {
+    if path == nil || len(path.Content) == 0 {
+        panic("the path is empty or was not defined")
+    }
+
+    fileContent, err := os.ReadFile(path.Content)
+    if err != nil {
+        panic("error reading JSON file: " + err.Error())
+    }
+
+    return fileContent
 }
 
 func newZapHandler() (slog.Handler, error) {

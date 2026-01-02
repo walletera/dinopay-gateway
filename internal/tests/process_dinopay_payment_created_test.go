@@ -43,15 +43,12 @@ func InitializeProcessDinopayPaymentCreatedScenario(ctx *godog.ScenarioContext) 
     ctx.After(afterScenarioHook)
 }
 
-func aDinoPayPaymentCreatedEvent(ctx context.Context, event *godog.DocString) (context.Context, error) {
-    if event == nil || len(event.Content) == 0 {
-        return ctx, fmt.Errorf("the WithdrawalCreated event is empty or was not defined")
-    }
-    return context.WithValue(ctx, rawDinopayPaymentCreatedEventKey, []byte(event.Content)), nil
+func aDinoPayPaymentCreatedEvent(ctx context.Context, jsonEventFilePath *godog.DocString) (context.Context, error) {
+    return context.WithValue(ctx, rawDinopayPaymentCreatedEventKey, readFile(jsonEventFilePath)), nil
 }
 
-func aPaymentsEndpointToCreateDeposits(ctx context.Context, mockserverExpectation *godog.DocString) (context.Context, error) {
-    return createMockServerExpectation(ctx, mockserverExpectation, paymentsCreateDepositEndpointExpectationKey)
+func aPaymentsEndpointToCreateDeposits(ctx context.Context, mockserverExpectationFilePath *godog.DocString) (context.Context, error) {
+    return createMockServerExpectation(ctx, mockserverExpectationFilePath, paymentsCreateDepositEndpointExpectationKey)
 }
 
 func theWebhookEventIsReceived(ctx context.Context) (context.Context, error) {

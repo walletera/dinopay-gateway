@@ -50,19 +50,16 @@ func InitializeProcessWithdrawalCreatedScenario(ctx *godog.ScenarioContext) {
     ctx.After(afterScenarioHook)
 }
 
-func aPaymentCreatedEvent(ctx context.Context, event *godog.DocString) (context.Context, error) {
-    if event == nil || len(event.Content) == 0 {
-        return ctx, fmt.Errorf("the WithdrawalCreated event is empty or was not defined")
-    }
-    return context.WithValue(ctx, rawWithdrawalCreatedEventKey, []byte(event.Content)), nil
+func aPaymentCreatedEvent(ctx context.Context, eventFilePath *godog.DocString) (context.Context, error) {
+    return context.WithValue(ctx, rawWithdrawalCreatedEventKey, readFile(eventFilePath)), nil
 }
 
-func aDinopayEndpointToCreatePayments(ctx context.Context, mockserverExpectation *godog.DocString) (context.Context, error) {
-    return createMockServerExpectation(ctx, mockserverExpectation, dinoPayEndpointCreatePaymentsExpectationIdKey)
+func aDinopayEndpointToCreatePayments(ctx context.Context, mockserverExpectationFilePath *godog.DocString) (context.Context, error) {
+    return createMockServerExpectation(ctx, mockserverExpectationFilePath, dinoPayEndpointCreatePaymentsExpectationIdKey)
 }
 
-func aPaymentsEndpointToUpdatePayments(ctx context.Context, mockserverExpectation *godog.DocString) (context.Context, error) {
-    return createMockServerExpectation(ctx, mockserverExpectation, paymentsEndpointUpdateWithdrawalExpectationIdKey)
+func aPaymentsEndpointToUpdatePayments(ctx context.Context, mockserverExpectationFilePath *godog.DocString) (context.Context, error) {
+    return createMockServerExpectation(ctx, mockserverExpectationFilePath, paymentsEndpointUpdateWithdrawalExpectationIdKey)
 }
 
 func theEventIsPublished(ctx context.Context) (context.Context, error) {
