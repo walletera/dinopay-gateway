@@ -253,5 +253,9 @@ func newZapHandler() (slog.Handler, error) {
     if err != nil {
         return nil, err
     }
-    return zapslog.NewHandler(zapLogger.Core(), nil), nil
+    return zapslog.NewHandler(
+        zapLogger.Core(),
+        // never add stacktrace
+        zapslog.AddStacktraceAt(slog.LevelError+1),
+        ), nil
 }

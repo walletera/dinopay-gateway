@@ -134,7 +134,11 @@ func setDefaultOpts(app *App) error {
     if err != nil {
         return err
     }
-    app.logHandler = zapslog.NewHandler(zapLogger.Core(), nil)
+    app.logHandler = zapslog.NewHandler(
+        zapLogger.Core(),
+        // never add stacktrace
+        zapslog.AddStacktraceAt(slog.LevelError+1),
+    )
     return nil
 }
 
