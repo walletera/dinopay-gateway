@@ -23,16 +23,17 @@ Feature: process PaymentCreated event
     """
     When the event is published
     Then the dinopay-gateway creates the corresponding payment on the DinoPay API
+    And the dinopay-gateway produces the following log:
+    """
+    payments PaymentCreated event processed successfully
+    """
+#    And the dinopay-gateway produces the following log:
+#    """
+#    OutboundPaymentCreated event processed successfully
+#    """
     And the dinopay-gateway updates the payment on payments service
-    And the dinopay-gateway produces the following log:
-    """
-    PaymentCreated event processed successfully
-    """
-    And the dinopay-gateway produces the following log:
-    """
-    OutboundPaymentCreated event processed successfully
-    """
 
+<<<<<<< Updated upstream
   Scenario: payment created event processing failed when trying to create payment on Dinopay
     Given a PaymentCreated event:
     """
@@ -48,3 +49,94 @@ Feature: process PaymentCreated event
     """
     failed creating payment on dinopay
     """
+=======
+
+#  Scenario: payment created event processing failed when trying to create payment on Dinopay
+#    Given a PaymentCreated event:
+#    """json
+#{
+#      "id": "eefe8e76-58eb-4a3e-bf05-c7f703ddc220",
+#      "type": "PaymentCreated",
+#      "data": {
+#        "id": "0ae1733e-7538-4908-b90a-5721670cb093",
+#        "customerId": "abbb8aa3-87f9-4b2b-889f-8962cf708cfc",
+#        "amount": 100,
+#        "currency": "USD",
+#        "gateway": "dinopay",
+#        "direction": "outbound",
+#        "status": "pending",
+#        "debtor": {
+#          "institutionName": "dinopay",
+#          "institutionId": "dinopay",
+#          "currency": "ARS",
+#          "accountDetails": {
+#            "accountType": "dinopay",
+#            "accountHolder": "Richard Roe",
+#            "accountNumber": "1200079635"
+#          }
+#        },
+#        "beneficiary": {
+#          "institutionName": "dinopay",
+#          "institutionId": "dinopay",
+#          "currency": "ARS",
+#          "accountDetails": {
+#             "accountType": "dinopay",
+#             "accountHolder": "Richard Roe",
+#            "accountNumber": "1200079635"
+#            }
+#        },
+#      "updatedAt": "2024-06-27T15:45:00Z",
+#      "createdAt": "2024-06-27T15:45:00Z"
+#      },
+#      "createdAt": "2024-06-27T15:45:00Z"
+#    }
+#    """
+#    And  a dinopay endpoint to create payments:
+#    # the json below is a mockserver expectation
+#    """json
+#    {
+#      "id": "createPaymentFail",
+#      "httpRequest" : {
+#        "method": "POST",
+#        "path" : "/payments",
+#        "body": {
+#            "type": "JSON",
+#            "json": {
+#              "customerTransactionId": "0ae1733e-7538-4908-b90a-5721670cb093",
+#              "amount": 100,
+#              "currency": "USD",
+#              "sourceAccount" : {
+#                "accountHolder" : "Richard Roe",
+#                "accountNumber" : "Richard Roe"
+#              },
+#              "destinationAccount": {
+#                "accountHolder": "Richard Roe",
+#                "accountNumber": "1200079635"
+#              }
+#            },
+#            "matchType": "ONLY_MATCHING_FIELDS"
+#        }
+#      },
+#      "httpResponse" : {
+#        "statusCode" : 500,
+#        "headers" : {
+#          "content-type" : [ "text/html" ]
+#        },
+#        "body" : "something bad happened"
+#      },
+#      "priority" : 0,
+#      "timeToLive" : {
+#        "unlimited" : true
+#      },
+#      "times" : {
+#        "unlimited" : true
+#      }
+#    }
+#    """
+#    When the event is published
+#    Then the dinopay-gateway fails creating the corresponding payment on the DinoPay API
+#    And  the dinopay-gateway produces the following log:
+#    """
+#    failed creating payment on dinopay
+#    """
+>>>>>>> Stashed changes

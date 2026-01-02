@@ -9,6 +9,48 @@ Feature: process DinoPay webhook event PaymentCreated
     """
     data/dinopay_payment_created_event.json
     """
+    And  an accounts endpoint to get accounts:
+    # the json below is a mockserver expectation
+    """json
+    {
+      "id": "getAccount",
+      "httpRequest" : {
+        "method": "GET",
+        "path": "/accounts",
+        "queryStringParameters": {
+            "dinopayAccountNumber": "IE12BOFI90000112349876"
+        }
+      },
+      "httpResponse" : {
+        "statusCode" : 200,
+        "headers" : {
+          "content-type" : [ "application/json" ]
+        },
+        "body": [
+          {
+            "id": "11111111-2222-3333-4444-555555555555",
+            "customerId": "9fd3bc09-99da-4486-950a-11082f5fd966",
+            "customerAccountId": "DINO-ACC-001",
+            "institutionName": "DinoPay Bank",
+            "institutionId": "DNPY-001",
+            "currency": "ARS",
+            "accountDetails": {
+              "accountType": "dinopay",
+              "accountHolder": "jane doe",
+              "accountNumber": "IE12BOFI90000112349876"
+            }
+          }
+        ]
+      },
+      "priority" : 0,
+      "timeToLive" : {
+        "unlimited" : true
+      },
+      "times" : {
+        "unlimited" : true
+      }
+    }
+    """
     And  a payments endpoint to create payments:
     """
     data/payments_create_payments_endpoint_expectation.json

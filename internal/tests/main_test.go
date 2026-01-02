@@ -17,7 +17,7 @@ import (
 const (
 	mockserverPort               = "2090"
 	eventStoreDBPort             = "2113"
-	containersStartTimeout       = 30 * time.Second
+	containersStartTimeout       = 30 * time.Minute
 	containersTerminationTimeout = 10 * time.Second
 )
 
@@ -93,7 +93,7 @@ func startEventStoreDBContainer(ctx context.Context) (func() error, error) {
 		Started:          true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error creating rabbitmq container: %w", err)
+		return nil, fmt.Errorf("error creating eventstoredb container: %w", err)
 	}
 
 	return func() error {
@@ -101,7 +101,7 @@ func startEventStoreDBContainer(ctx context.Context) (func() error, error) {
 		defer terminationCtxCancel()
 		terminationErr := esdbContainer.Terminate(terminationCtx)
 		if terminationErr != nil {
-			fmt.Errorf("failed terminating esdb container: %w", err)
+			return fmt.Errorf("failed terminating esdb container: %w", err)
 		}
 		return nil
 	}, nil
