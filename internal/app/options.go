@@ -32,6 +32,9 @@ func WithDinopayUrl(url string) func(app *App) {
     return func(app *App) { app.dinopayUrl = url }
 }
 
+func WithAccountsUrl(url string) func(app *App) { return func(app *App) { app.accountsUrl = url }
+}
+
 func WithPaymentsUrl(url string) func(app *App) {
     return func(app *App) { app.paymentsUrl = url }
 }

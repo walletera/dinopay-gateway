@@ -9,6 +9,10 @@ Feature: process DinoPay webhook event PaymentCreated
     """
     data/dinopay_payment_created_event.json
     """
+    And  an accounts endpoint to get accounts:
+    """
+    data/accounts_get_account_endpoint_expectation.json
+    """
     And  a payments endpoint to create payments:
     """
     data/payments_create_payments_endpoint_expectation.json

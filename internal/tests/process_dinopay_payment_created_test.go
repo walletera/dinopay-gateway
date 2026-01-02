@@ -13,6 +13,7 @@ import (
 
 const (
     rawDinopayPaymentCreatedEventKey            = "rawDinopayPaymentCreatedEventKey"
+    accountsGetAccountEndpointExpectationKey    = "accountsGetAccountEndpointExpectationKey"
     paymentsCreateDepositEndpointExpectationKey = "paymentsCreateDepositEndpointExpectationKey"
 )
 
@@ -36,6 +37,7 @@ func InitializeProcessDinopayPaymentCreatedScenario(ctx *godog.ScenarioContext) 
     ctx.Before(beforeScenarioHook)
     ctx.Step(`^a running dinopay-gateway$`, aRunningDinopayGateway)
     ctx.Step(`^a DinoPay PaymentCreated event:$`, aDinoPayPaymentCreatedEvent)
+    ctx.Step(`^an accounts endpoint to get accounts:$`, anAccountsEndpointToGetAccounts)
     ctx.Step(`^a payments endpoint to create payments:$`, aPaymentsEndpointToCreateDeposits)
     ctx.When(`^the webhook event is received$`, theWebhookEventIsReceived)
     ctx.Step(`^the dinopay-gateway creates the corresponding payment on the Payments API$`, theDinopaygatewayCreatesTheCorrespondingPaymentOnThePaymentsAPI)
@@ -45,6 +47,10 @@ func InitializeProcessDinopayPaymentCreatedScenario(ctx *godog.ScenarioContext) 
 
 func aDinoPayPaymentCreatedEvent(ctx context.Context, jsonEventFilePath *godog.DocString) (context.Context, error) {
     return context.WithValue(ctx, rawDinopayPaymentCreatedEventKey, readFile(jsonEventFilePath)), nil
+}
+
+func anAccountsEndpointToGetAccounts(ctx context.Context, mockserverExpectationFilePath *godog.DocString) (context.Context, error) {
+    return createMockServerExpectation(ctx, mockserverExpectationFilePath, accountsGetAccountEndpointExpectationKey)
 }
 
 func aPaymentsEndpointToCreateDeposits(ctx context.Context, mockserverExpectationFilePath *godog.DocString) (context.Context, error) {

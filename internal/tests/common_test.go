@@ -90,31 +90,32 @@ func aRunningDinopayGateway(ctx context.Context) (context.Context, error) {
     logHandler := logsWatcherFromCtx(ctx).DecoratedHandler()
 
     appCtx, appCtxCancelFunc := context.WithCancel(ctx)
-    app, err := app.NewApp(
+    dinopayGateway, err := app.NewApp(
         app.WithRabbitmqHost(rabbitmq.DefaultHost),
         app.WithRabbitmqPort(rabbitmq.DefaultPort),
         app.WithRabbitmqUser(rabbitmq.DefaultUser),
         app.WithRabbitmqPassword(rabbitmq.DefaultPassword),
         app.WithDinopayUrl(mockserverUrl),
+        app.WithAccountsUrl(mockserverUrl),
         app.WithPaymentsUrl(mockserverUrl),
         app.WithESDBUrl(eventStoreDBUrl),
         app.WithLogHandler(logHandler),
     )
     if err != nil {
-        panic("failed initializing app: " + err.Error())
+        panic("failed initializing dinopayGateway: " + err.Error())
     }
 
-    err = app.Run(appCtx)
+    err = dinopayGateway.Run(appCtx)
     if err != nil {
-        panic("failed running app" + err.Error())
+        panic("failed running dinopayGateway" + err.Error())
     }
 
-    ctx = context.WithValue(ctx, appKey, app)
+    ctx = context.WithValue(ctx, appKey, dinopayGateway)
     ctx = context.WithValue(ctx, appCtxCancelFuncKey, appCtxCancelFunc)
 
     foundLogEntry := logsWatcherFromCtx(ctx).WaitFor("dinopay-gateway started", logsWatcherWaitForTimeout)
     if !foundLogEntry {
-        return ctx, fmt.Errorf("app startup failed (didn't find expected log entry)")
+        return ctx, fmt.Errorf("dinopayGateway startup failed (didn't find expected log entry)")
     }
 
     return ctx, nil
@@ -160,14 +161,14 @@ func createMockServerExpectation(ctx context.Context, mockserverExpectationFileP
     var unmarshalledExpectation MockServerExpectation
     err := json.Unmarshal(rawMockserverExpectation, &unmarshalledExpectation)
     if err != nil {
-        fmt.Errorf("error unmarshalling expectation: %w", err)
+        return ctx, fmt.Errorf("error unmarshalling expectation: %w", err)
     }
 
     ctx = context.WithValue(ctx, ctxKey, unmarshalledExpectation.ExpectationID)
 
     err = mockServerClient().CreateExpectation(ctx, rawMockserverExpectation)
     if err != nil {
-        fmt.Errorf("error creating mockserver expectations")
+        return ctx, fmt.Errorf("error creating mockserver expectations")
     }
 
     return ctx, nil

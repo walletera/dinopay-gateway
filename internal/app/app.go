@@ -7,6 +7,7 @@ import (
     "time"
 
     "github.com/EventStore/EventStore-Client-Go/v4/esdb"
+    accountsapi "github.com/walletera/accounts/publicapi"
     "github.com/walletera/dinopay-gateway/internal/adapters/dinopay"
     dinopayevents "github.com/walletera/dinopay-gateway/internal/domain/events/dinopay"
     "github.com/walletera/dinopay-gateway/internal/domain/events/walletera/gateway/inbound"
@@ -42,6 +43,7 @@ type App struct {
     rabbitmqUser     string
     rabbitmqPassword string
     dinopayUrl       string
+    accountsUrl      string
     paymentsUrl      string
     esdbUrl          string
     logHandler       slog.Handler
@@ -231,7 +233,22 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
     return paymentsMessageProcessor, nil
 }
 
+type AccountsSecuritySource struct {
+}
+
+func (a AccountsSecuritySource) BearerAuth(ctx context.Context, operationName accountsapi.OperationName) (accountsapi.BearerAuth, error) {
+    //TODO implement me
+    return accountsapi.BearerAuth{
+        Token: "somejsonwebtoken",
+        Roles: nil,
+    }, nil
+}
+
 func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Processor[dinopayevents.EventsHandler], error) {
+    accountsapiClient, err := accountsapi.NewClient(app.accountsUrl, AccountsSecuritySource{})
+    if err != nil {
+        return nil, fmt.Errorf("failed creating accounts api client: %w", err)
+    }
     paymentsClient, err := paymentsapi.NewClient(app.paymentsUrl)
     if err != nil {
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
@@ -242,7 +259,7 @@ func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
         return nil, fmt.Errorf("failed getting esdb client: %w", err)
     }
     eventsDB := eventstoredb.NewDB(esdbClient)
-    eventsHandler := dinopayevents.NewEventsHandlerImpl(eventsDB, paymentsClient, logger)
+    eventsHandler := dinopayevents.NewEventsHandlerImpl(eventsDB, accountsapiClient, paymentsClient, logger)
     return messages.NewProcessor[dinopayevents.EventsHandler](
         webhookConsumer,
         dinopayevents.NewEventsDeserializer(),
