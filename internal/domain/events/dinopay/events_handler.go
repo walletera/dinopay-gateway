@@ -44,7 +44,7 @@ func NewEventsHandlerImpl(
 func (ev EventsHandlerImpl) HandlePaymentCreated(ctx context.Context, event PaymentCreated) werrors.WError {
 	// TODO get correlation id from PaymentCreated and copy into PaymentReceived
 	eventUUID := wuuid.NewUUID()
-	depositUUID := wuuid.NewUUID()
+	paymentUUID := wuuid.NewUUID()
 	accountNumber := event.Data.DestinationAccount.AccountNumber
 	resp, err := ev.accountsApiClient.ListAccounts(ctx, accountsapi.ListAccountsParams{DinopayAccountNumber: accountsapi.NewOptString(accountNumber)})
 	if err != nil {
@@ -79,7 +79,7 @@ func (ev EventsHandlerImpl) HandlePaymentCreated(ctx context.Context, event Paym
 		Id:               eventUUID,
 		DinopayPaymentId: event.Data.Id,
 		CustomerId:       customerUUID,
-		PaymentId:        depositUUID,
+		PaymentId:        paymentUUID,
 		Amount:           event.Data.Amount,
 		Currency:         event.Data.Currency,
 		SourceAccount: inbound.Account{
