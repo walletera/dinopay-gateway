@@ -38,6 +38,7 @@ const (
 )
 
 type App struct {
+    webhookPort      int
     rabbitmqHost     string
     rabbitmqPort     int
     rabbitmqUser     string
@@ -141,6 +142,7 @@ func setDefaultOpts(app *App) error {
         // never add stacktrace
         zapslog.AddStacktraceAt(slog.LevelError+1),
     )
+    app.webhookPort = WebhookServerPort
     return nil
 }
 
@@ -253,7 +255,7 @@ func createDinopayMessageProcessor(app *App, logger *slog.Logger) (*messages.Pro
     if err != nil {
         return nil, fmt.Errorf("failed creating payments api client: %w", err)
     }
-    webhookConsumer := webhook.NewServer(WebhookServerPort, webhook.WithLogger(logger.With(logattr.Component("webhook.Server"))))
+    webhookConsumer := webhook.NewServer(app.webhookPort, webhook.WithLogger(logger.With(logattr.Component("webhook.Server"))))
     esdbClient, err := eventstoredb.GetESDBClient(app.esdbUrl)
     if err != nil {
         return nil, fmt.Errorf("failed getting esdb client: %w", err)

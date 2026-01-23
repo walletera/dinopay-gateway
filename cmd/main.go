@@ -17,20 +17,24 @@ func main() {
     ctx, ctxCancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
     defer ctxCancel()
 
+    webhookPort := mustGetIntEnv("WEBHOOK_PORT")
     rabbitmqHost := mustGetEnv("RABBITMQ_HOST")
     rabbitmqPort := mustGetIntEnv("RABBITMQ_PORT")
     rabbitmqUser := mustGetEnv("RABBITMQ_USER")
     rabbitmqPassword := mustGetEnv("RABBITMQ_PASSWORD")
     dinopayURL := mustGetEnv("DINOPAY_URL")
+    accountsURL := mustGetEnv("ACCOUNTS_URL")
     paymentsURL := mustGetEnv("PAYMENTS_URL")
     eventstoredbURL := mustGetEnv("EVENTSTOREDB_URL")
 
-    app, err := app.NewApp(
+    dinopayGateway, err := app.NewApp(
+        app.WithWebhookPort(webhookPort),
         app.WithRabbitmqHost(rabbitmqHost),
         app.WithRabbitmqPort(rabbitmqPort),
         app.WithRabbitmqUser(rabbitmqUser),
         app.WithRabbitmqPassword(rabbitmqPassword),
         app.WithDinopayUrl(dinopayURL),
+        app.WithAccountsUrl(accountsURL),
         app.WithPaymentsUrl(paymentsURL),
         app.WithESDBUrl(eventstoredbURL),
     )
@@ -38,7 +42,7 @@ func main() {
         panic(err)
     }
 
-    err = app.Run(ctx)
+    err = dinopayGateway.Run(ctx)
     if err != nil {
         panic(err)
     }
@@ -48,7 +52,7 @@ func main() {
     shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), shutdownTimeout)
     defer shutdownCtxCancel()
 
-    app.Stop(shutdownCtx)
+    dinopayGateway.Stop(shutdownCtx)
 }
 
 func mustGetEnv(envName string) string {

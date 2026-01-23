@@ -4,6 +4,12 @@ import "log/slog"
 
 type Option func(app *App)
 
+func WithWebhookPort(port int) func(a *App) {
+    return func(a *App) {
+        a.webhookPort = port
+    }
+}
+
 func WithRabbitmqHost(host string) func(a *App) {
     return func(a *App) {
         a.rabbitmqHost = host
