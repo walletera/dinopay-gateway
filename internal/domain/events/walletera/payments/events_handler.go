@@ -11,8 +11,11 @@ import (
     dinopayapi "github.com/walletera/dinopay/api"
     "github.com/walletera/eventskit/eventsourcing"
     paymentEvents "github.com/walletera/payments-types/events"
+    "github.com/walletera/payments-types/privateapi"
     "github.com/walletera/werrors"
 )
+
+const dinopayGatewayName = "dinopay"
 
 type EventsHandler struct {
     dinopayClient dinopay.Client
@@ -37,7 +40,14 @@ func (ev *EventsHandler) HandlePaymentCreated(ctx context.Context, paymentCreate
         logattr.EventType(paymentCreated.Type()),
         logattr.PaymentId(walleteraPaymentId.String()),
     )
+
+    if paymentCreated.Data.Gateway != privateapi.GatewayDinopay ||
+        paymentCreated.Data.Direction != privateapi.DirectionOutbound {
+        return nil
+    }
+
     logger.Debug("handling PaymentCreated event")
+
     if !paymentCreated.Data.Debtor.AccountDetails.OneOf.IsDinopayAccountDetails() {
         return werrors.NewValidationError("invalid debtor account details type: %s", paymentCreated.Data.Beneficiary.AccountDetails.OneOf.Type)
     }
