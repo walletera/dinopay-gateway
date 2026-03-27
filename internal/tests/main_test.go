@@ -17,7 +17,7 @@ import (
 const (
 	mockserverPort               = "2090"
 	eventStoreDBPort             = "2113"
-	containersStartTimeout       = 30 * time.Second
+	containersStartTimeout       = 40 * time.Second
 	containersTerminationTimeout = 10 * time.Second
 )
 
@@ -78,11 +78,11 @@ func startEventStoreDBContainer(ctx context.Context) (func() error, error) {
 			fmt.Sprintf("%s:%s", eventStoreDBPort, eventStoreDBPort),
 		},
 		WaitingFor: wait.
-			ForHTTP("/health/live").
+			ForHTTP("/projection/$by_category/state").
 			WithPort("2113/tcp").
-			WithStartupTimeout(10 * time.Second).
+			WithStartupTimeout(20 * time.Second).
 			WithStatusCodeMatcher(func(status int) bool {
-				return status == http.StatusNoContent
+				return status == http.StatusOK
 			}),
 		LogConsumerCfg: &testcontainers.LogConsumerConfig{
 			Consumers: []testcontainers.LogConsumer{NewContainerLogConsumer("esdb")},
@@ -93,7 +93,7 @@ func startEventStoreDBContainer(ctx context.Context) (func() error, error) {
 		Started:          true,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error creating rabbitmq container: %w", err)
+		return nil, fmt.Errorf("error creating kurrentdb container: %w", err)
 	}
 
 	return func() error {
