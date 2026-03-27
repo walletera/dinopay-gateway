@@ -9,7 +9,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.40.0
 	github.com/walletera/accounts v0.0.3
 	github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907
-	github.com/walletera/eventskit v0.0.6
+	github.com/walletera/eventskit v0.0.9
 	github.com/walletera/logs-watcher v0.0.5
 	github.com/walletera/mockserver-go-client v0.0.1
 	github.com/walletera/payments-types v0.0.23
@@ -55,6 +55,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/klauspost/compress v1.18.1 // indirect
+	github.com/kurrent-io/KurrentDB-Client-Go v1.1.1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -95,8 +96,8 @@ require (
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241007155032-5fefd90f89a9 // indirect
-	google.golang.org/grpc v1.67.1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463 // indirect
+	google.golang.org/grpc v1.71.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

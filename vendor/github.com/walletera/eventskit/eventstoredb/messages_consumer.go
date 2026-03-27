@@ -4,12 +4,12 @@ import (
     "context"
     "fmt"
 
-    "github.com/EventStore/EventStore-Client-Go/v4/esdb"
+    "github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
     "github.com/walletera/eventskit/messages"
 )
 
 type MessagesConsumer struct {
-    esdbClient *esdb.Client
+    esdbClient *kurrentdb.Client
 
     connectionString string
     streamName       string
@@ -40,7 +40,7 @@ func (mc *MessagesConsumer) Consume() (<-chan messages.Message, error) {
         context.Background(),
         mc.streamName,
         mc.groupName,
-        esdb.SubscribeToPersistentSubscriptionOptions{},
+        kurrentdb.SubscribeToPersistentSubscriptionOptions{},
     )
     if err != nil {
         // FIXME return proper error

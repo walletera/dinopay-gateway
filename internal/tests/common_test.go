@@ -10,7 +10,6 @@ import (
     "os"
     "time"
 
-    "github.com/EventStore/EventStore-Client-Go/v4/esdb"
     "github.com/cucumber/godog"
     "github.com/walletera/dinopay-gateway/internal/app"
     "github.com/walletera/eventskit/eventstoredb"
@@ -25,7 +24,7 @@ import (
 
 const (
     mockserverUrl             = "http://localhost:2090"
-    eventStoreDBUrl           = "esdb://localhost:2113?tls=false"
+    eventStoreDBUrl           = "kurrentdb://localhost:2113?tls=false"
     appKey                    = "app"
     appCtxCancelFuncKey       = "appCtxCancelFuncKey"
     logsWatcherKey            = "logsWatcher"
@@ -130,14 +129,11 @@ func esdbByCategoryProjectionEnabled(ctx context.Context) (context.Context, erro
 }
 
 func anEventstoreDBPersistentSubscriptionForCategory(ctx context.Context, categoryName string) (context.Context, error) {
-    subscriptionSettings := esdb.SubscriptionSettingsDefault()
-    subscriptionSettings.ResolveLinkTos = true
 
     err := eventstoredb.CreatePersistentSubscription(
         eventStoreDBUrl,
         categoryName,
         app.ESDB_SubscriptionGroupName,
-        subscriptionSettings,
     )
     if err != nil {
         return ctx, err

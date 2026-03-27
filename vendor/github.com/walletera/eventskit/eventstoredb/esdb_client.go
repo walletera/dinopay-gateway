@@ -3,19 +3,19 @@ package eventstoredb
 import (
     "os"
 
-    "github.com/EventStore/EventStore-Client-Go/v4/esdb"
+    "github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
 )
 
-func GetESDBClient(connectionString string) (*esdb.Client, error) {
-    settings, err := esdb.ParseConnectionString(connectionString)
+func GetESDBClient(connectionString string) (*kurrentdb.Client, error) {
+    settings, err := kurrentdb.ParseConnectionString(connectionString)
     if err != nil {
         return nil, err
     }
 
     value, ok := os.LookupEnv("EVENTSTOREDB_CLIENT_LOG_ENABLED")
     if !ok || value != "true" {
-        settings.Logger = func(level esdb.LogLevel, format string, args ...interface{}) {}
+        settings.Logger = func(level kurrentdb.LogLevel, format string, args ...interface{}) {}
     }
 
-    return esdb.NewClient(settings)
+    return kurrentdb.NewClient(settings)
 }

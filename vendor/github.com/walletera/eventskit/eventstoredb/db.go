@@ -5,51 +5,63 @@ import (
     "errors"
     "io"
 
-    "github.com/EventStore/EventStore-Client-Go/v4/esdb"
+    "github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb"
     "github.com/walletera/eventskit/events"
     "github.com/walletera/eventskit/eventsourcing"
     "github.com/walletera/werrors"
 )
 
-// TODO check if there is a way to read all events from a stream
-// maybe reading page by page
-const readEventsMaxCount = 1000000
+const defaultReadEventsPageSize = 100
 
 type DB struct {
-    client *esdb.Client
+    client             *kurrentdb.Client
+    readEventsPageSize int
 }
 
-func NewDB(client *esdb.Client) *DB {
-    return &DB{
-        client: client,
+type Config func(*DB)
+
+func WithReadEventsPageSize(count int) func(db *DB) {
+    return func(db *DB) {
+        db.readEventsPageSize = count
     }
 }
 
+func NewDB(client *kurrentdb.Client, configs ...Config) *DB {
+    db := &DB{
+        client:             client,
+        readEventsPageSize: defaultReadEventsPageSize,
+    }
+    for _, config := range configs {
+        config(db)
+    }
+    return db
+}
+
 func (db *DB) AppendEvents(ctx context.Context, streamName string, expectedAggregateVersion eventsourcing.ExpectedAggregateVersion, events ...events.EventData) (uint64, werrors.WError) {
-    var eventsData []esdb.EventData
+    var eventsData []kurrentdb.EventData
     for _, event := range events {
         data, err := event.Serialize()
         if err != nil {
             return 0, werrors.NewNonRetryableInternalError(err.Error())
         }
-        eventData := esdb.EventData{
-            ContentType: esdb.ContentTypeJson,
+        eventData := kurrentdb.EventData{
+            ContentType: kurrentdb.ContentTypeJson,
             EventType:   event.Type(),
             Data:        data,
         }
         eventsData = append(eventsData, eventData)
     }
-    var expectedRevision esdb.ExpectedRevision
+    var expectedRevision kurrentdb.StreamState
     if expectedAggregateVersion.IsNew {
-        expectedRevision = esdb.NoStream{}
+        expectedRevision = kurrentdb.NoStream{}
     } else {
-        expectedRevision = esdb.Revision(expectedAggregateVersion.Version)
+        expectedRevision = kurrentdb.Revision(expectedAggregateVersion.Version)
     }
-    opts := esdb.AppendToStreamOptions{
-        ExpectedRevision: expectedRevision,
-        Authenticated:    nil,
-        Deadline:         nil,
-        RequiresLeader:   false,
+    opts := kurrentdb.AppendToStreamOptions{
+        StreamState:    expectedRevision,
+        Authenticated:  nil,
+        Deadline:       nil,
+        RequiresLeader: false,
     }
     writeResult, err := db.client.AppendToStream(ctx, streamName, opts, eventsData...)
     if err != nil {
@@ -59,11 +71,37 @@ func (db *DB) AppendEvents(ctx context.Context, streamName string, expectedAggre
 }
 
 func (db *DB) ReadEvents(ctx context.Context, streamName string) ([]eventsourcing.RetrievedEvent, werrors.WError) {
-    stream, err := db.client.ReadStream(ctx, streamName, esdb.ReadStreamOptions{
-        Direction:      esdb.Forwards,
-        From:           esdb.Start{},
-        ResolveLinkTos: true,
-    }, readEventsMaxCount)
+    retrievedEventsPage, err := db.readEventsFrom(ctx, streamName, kurrentdb.Start{})
+    if err != nil {
+        return nil, err
+    }
+
+    allRetrievedStreamEvents := retrievedEventsPage
+
+    for len(retrievedEventsPage) == db.readEventsPageSize {
+        lastRetrievedEvent := retrievedEventsPage[len(retrievedEventsPage)-1]
+        nextReadEventPosition := kurrentdb.StreamRevision{Value: lastRetrievedEvent.AggregateVersion + 1}
+        retrievedEventsPage, err = db.readEventsFrom(ctx, streamName, nextReadEventPosition)
+        if err != nil {
+            return nil, err
+        }
+        allRetrievedStreamEvents = append(allRetrievedStreamEvents, retrievedEventsPage...)
+    }
+
+    return allRetrievedStreamEvents, nil
+}
+
+func (db *DB) readEventsFrom(ctx context.Context, streamName string, from kurrentdb.StreamPosition) ([]eventsourcing.RetrievedEvent, werrors.WError) {
+    stream, err := db.client.ReadStream(
+        ctx,
+        streamName,
+        kurrentdb.ReadStreamOptions{
+            Direction:      kurrentdb.Forwards,
+            From:           from,
+            ResolveLinkTos: true,
+        },
+        uint64(db.readEventsPageSize),
+    )
 
     if err != nil {
         return nil, mapReadErrorToWalleteraError(err)
@@ -93,15 +131,15 @@ func (db *DB) ReadEvents(ctx context.Context, streamName string) ([]eventsourcin
 }
 
 func mapAppendErrorToWalleteraError(err error, version eventsourcing.ExpectedAggregateVersion) werrors.WError {
-    esdbError, _ := esdb.FromError(err)
+    esdbError, _ := kurrentdb.FromError(err)
     switch esdbError.Code() {
-    case esdb.ErrorCodeWrongExpectedVersion:
+    case kurrentdb.ErrorCodeWrongExpectedVersion:
         if version.IsNew {
             return werrors.NewResourceAlreadyExistError(err.Error())
         } else {
             return werrors.NewWrongResourceVersionError(err.Error())
         }
-    case esdb.ErrorCodeResourceNotFound:
+    case kurrentdb.ErrorCodeResourceNotFound:
         return werrors.NewResourceNotFoundError(err.Error())
     default:
         return werrors.NewRetryableInternalError(err.Error())
@@ -109,9 +147,9 @@ func mapAppendErrorToWalleteraError(err error, version eventsourcing.ExpectedAgg
 }
 
 func mapReadErrorToWalleteraError(err error) werrors.WError {
-    esdbError, _ := esdb.FromError(err)
+    esdbError, _ := kurrentdb.FromError(err)
     switch esdbError.Code() {
-    case esdb.ErrorCodeResourceNotFound:
+    case kurrentdb.ErrorCodeResourceNotFound:
         return werrors.NewResourceNotFoundError(err.Error())
     default:
         return werrors.NewRetryableInternalError(err.Error())

@@ -6,7 +6,6 @@ import (
     "log/slog"
     "time"
 
-    "github.com/EventStore/EventStore-Client-Go/v4/esdb"
     accountsapi "github.com/walletera/accounts/publicapi"
     "github.com/walletera/dinopay-gateway/internal/adapters/dinopay"
     dinopayevents "github.com/walletera/dinopay-gateway/internal/domain/events/dinopay"
@@ -165,14 +164,10 @@ func newZapLogger() (*zap.Logger, error) {
 }
 
 func (app *App) execESDBSetupTasks(_ context.Context) error {
-    subscriptionSettings := esdb.SubscriptionSettingsDefault()
-    subscriptionSettings.ResolveLinkTos = true
-
     err := eventstoredb.CreatePersistentSubscription(
         app.esdbUrl,
         ESDB_ByCategoryProjection_OutboundPayment,
         ESDB_SubscriptionGroupName,
-        subscriptionSettings,
     )
     if err != nil {
         return fmt.Errorf("failed creating persistent subscription for %s: %w", ESDB_ByCategoryProjection_OutboundPayment, err)
@@ -182,7 +177,6 @@ func (app *App) execESDBSetupTasks(_ context.Context) error {
         app.esdbUrl,
         ESDB_ByCategoryProjection_InboundPayment,
         ESDB_SubscriptionGroupName,
-        subscriptionSettings,
     )
     if err != nil {
         return fmt.Errorf("failed creating persistent subscription for %s: %w", ESDB_ByCategoryProjection_InboundPayment, err)
@@ -219,7 +213,7 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
         return nil, fmt.Errorf("creating rabbitmq client: %w", err)
     }
 
-    paymentsMessageProcessor, err := messages.NewProcessor[paymentsevents.Handler](
+    paymentsMessageProcessor := messages.NewProcessor[paymentsevents.Handler](
         rabbitMQClient,
         paymentsevents.NewDeserializer(logger),
         handler,
@@ -227,10 +221,7 @@ func createPaymentsMessageProcessor(app *App, logger *slog.Logger) (*messages.Pr
             logger.With(
                 logattr.Component("payments.rabbitmq.MessageProcessor")),
         ),
-    ), nil
-    if err != nil {
-        return nil, fmt.Errorf("failed creating payments rabbitmq processor: %w", err)
-    }
+    )
 
     return paymentsMessageProcessor, nil
 }

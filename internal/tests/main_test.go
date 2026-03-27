@@ -71,7 +71,7 @@ func TestMain(m *testing.M) {
 
 func startEventStoreDBContainer(ctx context.Context) (func() error, error) {
 	req := testcontainers.ContainerRequest{
-		Image: "eventstore/eventstore:21.10.7-buster-slim",
+		Image: "kurrentplatform/kurrentdb:26.0.0",
 		Name:  "esdb-node",
 		Cmd:   []string{"--insecure", "--run-projections=All"},
 		ExposedPorts: []string{

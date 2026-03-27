@@ -172,6 +172,18 @@ github.com/klauspost/compress/internal/le
 github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
+# github.com/kurrent-io/KurrentDB-Client-Go v1.1.1
+## explicit; go 1.23.0
+github.com/kurrent-io/KurrentDB-Client-Go/kurrentdb
+github.com/kurrent-io/KurrentDB-Client-Go/protos/kurrentdb/protocols/v1/gossip
+github.com/kurrent-io/KurrentDB-Client-Go/protos/kurrentdb/protocols/v1/persistent
+github.com/kurrent-io/KurrentDB-Client-Go/protos/kurrentdb/protocols/v1/projections
+github.com/kurrent-io/KurrentDB-Client-Go/protos/kurrentdb/protocols/v1/serverfeatures
+github.com/kurrent-io/KurrentDB-Client-Go/protos/kurrentdb/protocols/v1/shared
+github.com/kurrent-io/KurrentDB-Client-Go/protos/kurrentdb/protocols/v1/streams
+github.com/kurrent-io/KurrentDB-Client-Go/protos/kurrentdb/protocols/v2/rpc
+github.com/kurrent-io/KurrentDB-Client-Go/protos/kurrentdb/protocols/v2/streams/errors
+github.com/kurrent-io/KurrentDB-Client-Go/protos/kurrentdb/protocols/v2/streams/streams
 # github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0
 ## explicit; go 1.16
 github.com/lufia/plan9stats
@@ -307,8 +319,8 @@ github.com/walletera/accounts/publicapi
 # github.com/walletera/dinopay v0.0.0-20230816204422-8b81f160e907
 ## explicit; go 1.20
 github.com/walletera/dinopay/api
-# github.com/walletera/eventskit v0.0.6
-## explicit; go 1.22.4
+# github.com/walletera/eventskit v0.0.9
+## explicit; go 1.23.0
 github.com/walletera/eventskit/events
 github.com/walletera/eventskit/eventsourcing
 github.com/walletera/eventskit/eventstoredb
@@ -421,18 +433,22 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/unicode/rangetable
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20241007155032-5fefd90f89a9
-## explicit; go 1.21
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463
+## explicit; go 1.23.0
+google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.67.1
-## explicit; go 1.21
+# google.golang.org/grpc v1.71.0
+## explicit; go 1.22.0
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/base
+google.golang.org/grpc/balancer/endpointsharding
 google.golang.org/grpc/balancer/grpclb/state
 google.golang.org/grpc/balancer/pickfirst
+google.golang.org/grpc/balancer/pickfirst/internal
+google.golang.org/grpc/balancer/pickfirst/pickfirstleaf
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
 google.golang.org/grpc/channelz
@@ -460,7 +476,9 @@ google.golang.org/grpc/internal/grpcutil
 google.golang.org/grpc/internal/idle
 google.golang.org/grpc/internal/metadata
 google.golang.org/grpc/internal/pretty
+google.golang.org/grpc/internal/proxyattributes
 google.golang.org/grpc/internal/resolver
+google.golang.org/grpc/internal/resolver/delegatingresolver
 google.golang.org/grpc/internal/resolver/dns
 google.golang.org/grpc/internal/resolver/dns/internal
 google.golang.org/grpc/internal/resolver/passthrough
@@ -513,6 +531,7 @@ google.golang.org/protobuf/reflect/protoreflect
 google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
 google.golang.org/protobuf/runtime/protoimpl
+google.golang.org/protobuf/types/descriptorpb
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/emptypb
